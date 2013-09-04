@@ -1,6 +1,6 @@
-package com.yile.engine.geometries
+package lion.engine.geometries
 {
-	import com.yile.engine.math.Vector3D;
+	import lion.engine.math.Vector3D;
 
 	public class CubeGeometry
 	{

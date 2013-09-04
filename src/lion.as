@@ -1,7 +1,7 @@
 package
 {
-	import com.yile.engine.geometries.CubeGeometry;
-	import com.yile.engine.math.Vector3D;
+	import lion.engine.geometries.CubeGeometry;
+	import lion.engine.math.Vector3D;
 	
 	import flash.display.Sprite;
 	import flash.events.Event;
