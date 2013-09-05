@@ -1,19 +1,19 @@
 package lion.engine.geometries
 {
-	import lion.engine.math.Vector3D;
+	import lion.engine.math.Vector3;
 
 	public class CubeGeometry
 	{
 		// 所有立方体的顶点
 		public var vertices:Array = [
-			new Vector3D(-1, -1, 1),
-			new Vector3D(1, -1, 1),
-			new Vector3D(1, 1, 1),
-			new Vector3D(-1, 1, 1),
-			new Vector3D(-1, -1, -1),
-			new Vector3D(1, -1, -1),
-			new Vector3D(1, 1, -1),
-			new Vector3D(-1, 1, -1)
+			new Vector3(-1, -1, 1),
+			new Vector3(1, -1, 1),
+			new Vector3(1, 1, 1),
+			new Vector3(-1, 1, 1),
+			new Vector3(-1, -1, -1),
+			new Vector3(1, -1, -1),
+			new Vector3(1, 1, -1),
+			new Vector3(-1, 1, -1)
 		];
 		// 所有六个面
 		public var faces:Array = [

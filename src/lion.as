@@ -1,7 +1,7 @@
 package
 {
 	import lion.engine.geometries.CubeGeometry;
-	import lion.engine.math.Vector3D;
+	import lion.engine.math.Vector3;
 	
 	import flash.display.Sprite;
 	import flash.events.Event;
@@ -30,7 +30,7 @@ package
 			// 做顶点转换
 			var t:Array = [];
 			for (var i:int = 0; i < _cube.vertices.length; ++i) {
-				var p:Vector3D = _cube.vertices[i];
+				var p:Vector3 = _cube.vertices[i];
 				p = p.rotationY(_angle).rotationX(_angle).rotationZ(_angle);
 				t.push(p.project(800, 600, 300, 5));
 			}
