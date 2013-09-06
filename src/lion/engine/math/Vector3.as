@@ -24,34 +24,82 @@ package lion.engine.math
 			this.x = x;
 			this.y = y;
 			this.z = z;
+			
 			return this;
 		}
 		
-		public function rotationY(angle:Number):Vector3 {
-			var rad:Number = angle * Math.PI / 180;
-			var cosa:Number = Math.cos(rad);
-			var sina:Number = Math.sin(rad);
-			var z:Number = this.z * cosa - this.x * sina;
-			var x:Number = this.z * sina + this.x * cosa;
-			return new Vector3(x, this.y, z);
+		public function add(v:Vector3):Vector3 {
+			this.x += v.x;
+			this.y += v.y;
+			this.z += v.z;
+			
+			return this;
 		}
 		
-		public function rotationX(angle:Number):Vector3 {
-			var rad:Number = angle * Math.PI / 180;
-			var cosa:Number = Math.cos(rad);
-			var sina:Number = Math.sin(rad);
-			var z:Number = this.y * cosa - this.z * sina;
-			var y:Number = this.y * sina + this.z * cosa;
-			return new Vector3(this.x, y, z);
+		public function sub(v:Vector3):Vector3 {
+			this.x -= v.x;
+			this.y -= v.y;
+			this.z -= v.z;
+			
+			return this;
 		}
 		
-		public function rotationZ(angle:Number):Vector3 {
-			var rad:Number = angle * Math.PI / 180;
-			var cosa:Number = Math.cos(rad);
-			var sina:Number = Math.sin(rad);
-			var x:Number = this.x * cosa - this.y * sina;
-			var y:Number = this.x * sina + this.y * cosa;
-			return new Vector3(x, y, this.z);
+		public function dot(v:Vector3):Number {
+			return this.x * v.x + this.y * v.y + this.z * v.z;
+		}
+		
+		public function cross(v:Vector3):Vector3 {
+			var x:Number = this.x, y:Number = this.y, z:Number = this.z;
+			
+			this.x = y * v.z - z * v.y;
+			this.y = z * v.x - x * v.z;
+			this.z = x * v.y - y * v.x;
+			
+			return this;
+		}
+		
+		public function multiply(s:Number):Vector3 {
+			this.x *= s;
+			this.y *= s;
+			this.z *= s;
+			
+			return this;
+		}
+		
+		public function divide(s:Number):Vector3 {
+			this.x /= s;
+			this.y /= s;
+			this.z /= s;
+			
+			return this;
+		}
+		
+		public function normalize():Vector3 {
+			return divide(length);
+		}
+		
+		public function equals(v:Vector3):Boolean {
+			return x === v.x && y === v.y && z === v.z;
+		}
+		
+		public function get lengthSQ():Number {
+			return this.x * this.x + this.y * this.y + this.z * this.z;
+		}
+		
+		
+		public function get length():Number {
+			return Math.sqrt(lengthSQ);
+		}
+		
+		public function distSQ(v:Vector3):Number {
+			var dx:Number = v.x - x;
+			var dy:Number = v.y - y;
+			var dz:Number = v.z - z;
+			return dx * dx + dy * dy + dz * dz;
+		}
+		
+		public function dist(v:Vector3):Number {
+			return Math.sqrt(distSQ(v));
 		}
 		
 		public function applyProjection(viewWidth:Number, viewHeight:Number, fov:Number, viewDistance:Number):Vector3 {
@@ -61,8 +109,22 @@ package lion.engine.math
 			return new Vector3(x, y, this.z);
 		}
 		
+		public function applyMatrix4(m:Matrix4):Vector3 {
+			var e:Vector.<Number> = m.elements;
+			var x:Number = this.x, y:Number = this.y, z:Number = this.z;
+			this.x = e[0] * x + e[1] * y + e[2] * z + e[3];
+			this.y = e[4] * x + e[5] * y + e[6] * z + e[7];
+			this.z = e[8] * x + e[9] * y + e[10] * z + e[11];
+			
+			return this;
+		}
+		
 		public function clone():Vector3 {
 			return new Vector3(x, y, z);
+		}
+		
+		public function toString():String {
+			return "[Vector3 (x:" + x + ", y:" + y + ", z:" + z + ")]";
 		}
 	}
 }

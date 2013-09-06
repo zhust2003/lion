@@ -2,8 +2,8 @@ package lion.engine.math
 {
 	public class MathUtil
 	{
-		public static const degreeToRadiansFactor = Math.PI / 180;
-		public static const radianToDegreesFactor = 180 / Math.PI;
+		public static const degreeToRadiansFactor:Number = Math.PI / 180;
+		public static const radianToDegreesFactor:Number = 180 / Math.PI;
 		
 		public function MathUtil()
 		{
@@ -37,8 +37,8 @@ package lion.engine.math
 			return (rand(1, 100) <= v);
 		}
 		
-		public static function sign(v:Number):Boolean {
-			return (v < 0 ) ? -1 : ((v > 0) ? 1 : 0);
+		public static function sign(v:Number):int {
+			return (v < 0) ? -1 : ((v > 0) ? 1 : 0);
 		}
 		
 		public static function getRandomElementOf(array:Array):* {
