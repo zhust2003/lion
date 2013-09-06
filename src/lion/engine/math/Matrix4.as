@@ -43,7 +43,6 @@ package lion.engine.math
 		}
 		
 		public function multiply(m:Matrix4):Matrix4 {
-			
 			var ae:Vector.<Number> = this.elements;
 			var be:Vector.<Number> = m.elements;
 			var te:Vector.<Number> = this.elements;
@@ -59,27 +58,26 @@ package lion.engine.math
 			var b41:Number = be[12], b42:Number = be[13], b43:Number = be[14], b44:Number = be[15];
 			
 			te[0] = a11 * b11 + a12 * b21 + a13 * b31 + a14 * b41;
-			te[4] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
-			te[8] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
-			te[12] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
+			te[1] = a11 * b12 + a12 * b22 + a13 * b32 + a14 * b42;
+			te[2] = a11 * b13 + a12 * b23 + a13 * b33 + a14 * b43;
+			te[3] = a11 * b14 + a12 * b24 + a13 * b34 + a14 * b44;
 			
-			te[1] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
+			te[4] = a21 * b11 + a22 * b21 + a23 * b31 + a24 * b41;
 			te[5] = a21 * b12 + a22 * b22 + a23 * b32 + a24 * b42;
-			te[9] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
-			te[13] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
+			te[6] = a21 * b13 + a22 * b23 + a23 * b33 + a24 * b43;
+			te[7] = a21 * b14 + a22 * b24 + a23 * b34 + a24 * b44;
 			
-			te[2] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
-			te[6] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
+			te[8] = a31 * b11 + a32 * b21 + a33 * b31 + a34 * b41;
+			te[9] = a31 * b12 + a32 * b22 + a33 * b32 + a34 * b42;
 			te[10] = a31 * b13 + a32 * b23 + a33 * b33 + a34 * b43;
-			te[14] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
+			te[11] = a31 * b14 + a32 * b24 + a33 * b34 + a34 * b44;
 			
-			te[3] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
-			te[7] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
-			te[11] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
+			te[12] = a41 * b11 + a42 * b21 + a43 * b31 + a44 * b41;
+			te[13] = a41 * b12 + a42 * b22 + a43 * b32 + a44 * b42;
+			te[14] = a41 * b13 + a42 * b23 + a43 * b33 + a44 * b43;
 			te[15] = a41 * b14 + a42 * b24 + a43 * b34 + a44 * b44;
 			
 			return this;
-			
 		}
 		
 		public function clone():Matrix4 {
@@ -130,7 +128,7 @@ package lion.engine.math
 		}
 		
 		/**
-		 * 到标准视景体的转换
+		 * 正射视景体到标准视景体的转换
 		 * 标准视景体为 [-1, 1] x [-1, 1] x [-1, 1] 
 		 * @param left
 		 * @param right
@@ -155,6 +153,25 @@ package lion.engine.math
 			te[4] = 0;		te[5] = 2 / h;	te[6] = 0;		te[7] = -y;
 			te[8] = 0;		te[9] = 0;		te[10] = -2 / p;te[11] = -z;
 			te[12] = 0;		te[13] = 0;		te[14] = 0;		te[15] = 1;
+			
+			return this;
+		}
+		
+		
+		public function makePerspective(left:Number, right:Number, top:Number, bottom:Number, near:Number, far:Number):Matrix4 {
+			var te:Vector.<Number> = this.elements;
+			var x:Number = 2 * near / (right - left);
+			var y:Number = 2 * near / (top - bottom);
+			
+			var a:Number = (right + left) / (right - left);
+			var b:Number = (top + bottom) / (top - bottom);
+			var c:Number = - (far + near) / (far - near);
+			var d:Number = - 2 * far * near / (far - near);
+			
+			te[0] = x;	te[1] = 0;	te[2] = a;	te[3] = 0;
+			te[4] = 0;	te[5] = y;	te[6] = b;	te[7] = 0;
+			te[8] = 0;	te[9] = 0;	te[10] = c;	te[11] = d;
+			te[12] = 0;	te[13] = 0;	te[14] = -1;te[15] = 0;
 			
 			return this;
 		}
