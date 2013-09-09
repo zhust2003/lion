@@ -28,6 +28,14 @@ package lion.engine.math
 			return this;
 		}
 		
+		public function copy(v:Vector3):Vector3 {
+			this.x = v.x;
+			this.y = v.y;
+			this.z = v.z;
+			
+			return this;
+		}
+		
 		public function add(v:Vector3):Vector3 {
 			this.x += v.x;
 			this.y += v.y;
@@ -44,6 +52,14 @@ package lion.engine.math
 			return this;
 		}
 		
+		public function subVectors(a:Vector3, b:Vector3):Vector3 {
+			this.x = a.x - b.x;
+			this.y = a.y - b.y;
+			this.z = a.z - b.z;
+			
+			return this;
+		}
+		
 		public function dot(v:Vector3):Number {
 			return this.x * v.x + this.y * v.y + this.z * v.z;
 		}
@@ -54,6 +70,17 @@ package lion.engine.math
 			this.x = y * v.z - z * v.y;
 			this.y = z * v.x - x * v.z;
 			this.z = x * v.y - y * v.x;
+			
+			return this;
+		}
+		
+		public function crossVectors(a:Vector3, b:Vector3):Vector3 {
+			var ax:Number = a.x, ay:Number = a.y, az:Number = a.z;
+			var bx:Number = b.x, by:Number = b.y, bz:Number = b.z;
+			
+			this.x = ay * bz - az * by;
+			this.y = az * bx - ax * bz;
+			this.z = ax * by - ay * bx;
 			
 			return this;
 		}
@@ -102,12 +129,6 @@ package lion.engine.math
 			return Math.sqrt(distSQ(v));
 		}
 		
-		public function applyProjection(viewWidth:Number, viewHeight:Number, fov:Number, viewDistance:Number):Vector3 {
-			var factor:Number = fov / (viewDistance + this.z);
-			var x:Number = this.x * factor + viewWidth / 2;
-			var y:Number = this.y * factor + viewHeight / 2;
-			return new Vector3(x, y, this.z);
-		}
 		
 		public function applyMatrix4(m:Matrix4):Vector3 {
 			var e:Vector.<Number> = m.elements;

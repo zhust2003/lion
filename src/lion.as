@@ -11,6 +11,7 @@ package
 	import lion.engine.math.Matrix4;
 	import lion.engine.math.Vector3;
 	import lion.engine.math.Vector4;
+	import lion.engine.utils.InputManager;
 	
 	[SWF(frameRate="60", width="600", height="600", backgroundColor="#0")]
 	public class lion extends Sprite
@@ -20,11 +21,16 @@ package
 		private var _viewProjectionMatrix:Matrix4 = new Matrix4();
 //		private var _camera:OrthographicCamera = new OrthographicCamera(-5, 5, 5, -5, -5, 5);
 		private var _camera:PerspectiveCamera = new PerspectiveCamera(60, 1);
+		private var _viewMatrix:Matrix4 = new Matrix4();
 		
 		public function lion()
 		{
+			InputManager.instance.init(stage);
 			_cube = new CubeGeometry();
 			addEventListener(Event.ENTER_FRAME, update);
+			_camera.position.set(0, 1, -5);
+//			_camera.lookup(
+			_camera.updateMatrixWorld();
 		}
 		
 		protected function update(event:Event):void
@@ -51,17 +57,28 @@ package
 				p.applyMatrix4(m);
 				
 				// 转成世界坐标
-				var worldMatrix:Matrix4 = new Matrix4();
-				worldMatrix.multiply(new Matrix4().translate(0, 0, 5));
-				p.applyMatrix4(worldMatrix);
+//				var worldMatrix:Matrix4 = new Matrix4();
+//				worldMatrix.multiply(new Matrix4().translate(0, 0, 5));
+//				p.applyMatrix4(worldMatrix);
 				
 				// 投影矩阵
-//				_viewProjectionMatrix = new Matrix4();
-//				_viewProjectionMatrix.multiply(_camera.projectionMatrix);
-				_viewProjectionMatrix = _camera.projectionMatrix.clone();
+				// 先将世界坐标转为相对于摄像机原点的坐标矩阵
+				_viewMatrix.copy(_camera.matrixWorldInverse.getInverse(_camera.matrixWorld));
+				// 再乘投影矩阵
+				_viewProjectionMatrix.multiplyMatrices(_camera.projectionMatrix, _viewMatrix);
 				p.applyMatrix4(_viewProjectionMatrix);
-//				trace(p);
 				
+				// 除以齐次值
+				var invW:Number = 1 / p.w;
+				p.x *= invW;
+				p.y *= invW;
+				p.z *= invW;
+				p.w = 1;
+				
+				// 现在得到的就是标准视景体 
+				// [-1, 1] x [-1, 1] x [-1, 1] 
+				// TODO 视景体剔除
+
 				// 标准视景体到窗口的转换
 				var padding:Number = 20;
 				var w:Number = stage.stageWidth;
@@ -76,16 +93,7 @@ package
 				);
 				p.applyMatrix4(o);
 				
-				// 除以齐次值
-				var invW:Number = 1 / p.w;
-				
-				p.x *= invW;
-				p.y *= invW;
-				p.z *= invW;
-				
 				t.push(p);
-//				trace(p);
-//				t.push(p.applyProjection(800, 600, 300, 5));
 			}
 			
 			// 按z排序

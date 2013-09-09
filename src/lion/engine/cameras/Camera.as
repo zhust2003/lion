@@ -12,10 +12,12 @@ package lion.engine.cameras
 	public class Camera extends Object3D
 	{
 		public var projectionMatrix:Matrix4;
+		public var matrixWorldInverse:Matrix4;
 		
 		public function Camera()
 		{
-			projectionMatrix = new Matrix4()
+			projectionMatrix = new Matrix4();
+			matrixWorldInverse = new Matrix4();
 		}
 		
 		public function lookup(v:Vector3):void {

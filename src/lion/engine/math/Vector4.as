@@ -46,5 +46,9 @@ package lion.engine.math
 			
 			return this;
 		}
+		
+		public function toString():String {
+			return "[Vector4 (x:" + x + ", y:" + y + ", z:" + z + ", w:" + w + ")]";
+		}
 	}
 }

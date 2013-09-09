@@ -31,7 +31,6 @@ package lion.engine.cameras
 			var ymin:Number = - ymax;
 			var xmin:Number = ymin * aspect;
 			var xmax:Number = ymax * aspect;
-			trace(xmin, xmax, ymin, ymax);
 			projectionMatrix.makePerspective(xmin, xmax, ymin, ymax, near, far);
 		}
 	}
