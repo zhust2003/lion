@@ -28,8 +28,8 @@ package
 			InputManager.instance.init(stage);
 			_cube = new CubeGeometry();
 			addEventListener(Event.ENTER_FRAME, update);
-			_camera.position.set(0, 1, -5);
-//			_camera.lookup(
+			_camera.position.set(0, 2, -5);
+			_camera.lookAt(new Vector3(0, 0, 0));
 			_camera.updateMatrixWorld();
 		}
 		

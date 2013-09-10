@@ -144,9 +144,30 @@ package lion.engine.math
 			return this;
 		}
 		
+		/**
+		 * 通过位置，四元数，缩放参数复合成四维矩阵 
+		 * @param position
+		 * @param quaternion
+		 * @param scale
+		 * @return 
+		 * 
+		 */		
 		public function compose(position:Vector3, quaternion:Quaternion, scale:Vector3):Matrix4 {
 			makeRotationFromQuaternion(quaternion);
+			makeScale(scale);
 			makePosition(position);
+			return this;
+		}
+		
+		private function makeScale(v:Vector3):Matrix4 {
+			var te:Vector.<Number> = this.elements;
+			var x:Number = v.x, y:Number = v.y, z:Number = v.z;
+			
+			te[0] *= x; te[1] *= y; te[2] *= z;
+			te[4] *= x; te[5] *= y; te[6] *= z;
+			te[8] *= x; te[9] *= y; te[10] *= z;
+			te[12] *= x; te[13] *= y; te[14] *= z;
+			
 			return this;
 		}
 		
@@ -156,7 +177,37 @@ package lion.engine.math
 		 * @return 
 		 * 
 		 */		
-		private function makeRotationFromQuaternion(quaternion:Quaternion):Matrix4 {
+		private function makeRotationFromQuaternion(q:Quaternion):Matrix4 {
+			var te:Vector.<Number> = this.elements;
+			
+			var x:Number = q.x, y:Number = q.y, z:Number = q.z, w:Number = q.w;
+			var x2:Number = x + x, y2:Number = y + y, z2:Number = z + z;
+			var xx:Number = x * x2, xy:Number = x * y2, xz:Number = x * z2;
+			var yy:Number = y * y2, yz:Number = y * z2, zz:Number = z * z2;
+			var wx:Number = w * x2, wy:Number = w * y2, wz:Number = w * z2;
+			
+			te[0] = 1 - ( yy + zz );
+			te[1] = xy - wz;
+			te[2] = xz + wy;
+			
+			te[4] = xy + wz;
+			te[5] = 1 - ( xx + zz );
+			te[6] = yz - wx;
+			
+			te[8] = xz - wy;
+			te[9] = yz + wx;
+			te[10] = 1 - ( xx + yy );
+			
+			// last column
+			te[3] = 0;
+			te[7] = 0;
+			te[11] = 0;
+			
+			// bottom row
+			te[12] = 0;
+			te[13] = 0;
+			te[14] = 0;
+			te[15] = 1;
 			
 			return this;
 		}

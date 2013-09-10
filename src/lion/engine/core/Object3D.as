@@ -21,6 +21,7 @@ package lion.engine.core
 		public static var objectIDCount:uint = 0;
 		private var name:String;
 		public var position:Vector3;
+		
 		// 对外使用欧拉角
 		// 对内通过四元数计算
 		public var rotation:Euler;
@@ -47,25 +48,59 @@ package lion.engine.core
 			children = new Vector.<Object3D>();
 			name = '';
 			position = new Vector3();
-			rotation = new Euler();
 			scale = new Vector3(1, 1, 1);
 			matrix = new Matrix4();
 			matrixWorld = new Matrix4();
 			up = new Vector3(0, 1, 0);
 			quaternion = new Quaternion();
+			rotation = new Euler();
+			quaternion.euler = rotation;
+			rotation.quaternion = quaternion;
 			visible = true;
 		}
 		
-		public function rotateX(dist:Number):void {
-			
+		/**
+		 * 沿着X轴旋转 
+		 * @param angle
+		 * @return 
+		 * 
+		 */		
+		public function rotateX(angle:Number):Object3D {
+			return rotateOnAxis(X_AXIS, angle);
 		}
 		
-		public function rotateY(dist:Number):void {
-			
+		/**
+		 * 沿着Y轴旋转 
+		 * @param angle
+		 * @return 
+		 * 
+		 */		
+		public function rotateY(angle:Number):Object3D {
+			return rotateOnAxis(Y_AXIS, angle);
 		}
 		
-		public function rotateZ(dist:Number):void {
-			
+		/**
+		 * 沿着Z轴旋转 
+		 * @param angle
+		 * @return 
+		 * 
+		 */		
+		public function rotateZ(angle:Number):Object3D {
+			return rotateOnAxis(Z_AXIS, angle);
+		}
+		
+		/**
+		 * 沿着任意轴旋转 
+		 * @param axis
+		 * @param angle
+		 * @return 
+		 * 
+		 */		
+		public function rotateOnAxis(axis:Vector3, angle:Number):Object3D {
+			var q:Quaternion = new Quaternion();
+			q.setFromAxisAngle(axis, angle);
+			quaternion.multiply(q);
+			return this;
 		}
 		
 		/**
@@ -78,7 +113,7 @@ package lion.engine.core
 			var m:Matrix4 = new Matrix4();
 			m.lookAt(v, this.position, this.up);
 			
-			// 设置四元数值
+			quaternion.setFromRotationMatrix(m);
 		}
 		
 		/**
@@ -227,7 +262,7 @@ package lion.engine.core
 		 * 
 		 */		
 		public function updateMatrix():void {
-			matrix.compose(position, null, scale);
+			matrix.compose(position, quaternion, scale);
 		}
 		
 		/**
