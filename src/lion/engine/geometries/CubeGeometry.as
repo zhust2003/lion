@@ -2,7 +2,7 @@ package lion.engine.geometries
 {
 	import lion.engine.math.Vector3;
 
-	public class CubeGeometry
+	public class CubeGeometry extends Geometry
 	{
 		// 所有立方体的顶点
 		public var vertices:Array = [

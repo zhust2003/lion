@@ -1,5 +1,18 @@
 lion
 ====
 
-a simple 3d enigne
-just for learning
+## 目的 ##
+这个项目的主要目的是学习三维图形学
+
+## 计划 ##
+先实现基于flash10的3d引擎，包含简单的三维观察，建模，光照处理等，学习并了解三维渲染流水线
+
+然后再整合最新的stage3D做硬件加速，尽量做到可切换渲染引擎。
+
+该项目没有明确的完成时间，只在空闲时处理。
+
+## 参考 ##
+- three.js
+- papervision3d
+- away3d
+- doom3.gpl
