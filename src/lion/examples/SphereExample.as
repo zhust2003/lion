@@ -41,13 +41,13 @@ package lion.examples
 			scene = new Scene();
 			
 			// 创建一个面片
-			// 创建一个面片
 			var p:PlaneGeometry = new PlaneGeometry(10, 10, 2, 2);
 			
 			plane = new Mesh(p, new WireframeMaterial());
 			plane.rotation.x = -1.57;
 			scene.add(plane);
 			
+			// 创建一个球
 			var s:SphereGeometry = new SphereGeometry(5);
 			
 			sphere = new Mesh(s, new WireframeMaterial());
