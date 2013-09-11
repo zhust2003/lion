@@ -65,13 +65,13 @@ package lion.engine.renderer
 				
 				if (o is Mesh) {
 					var geometry:Geometry = Mesh(o).geometry;
-					var vertics:Vector.<Vector3> = geometry.vertics;
+					var vertices:Vector.<Vector3> = geometry.vertices;
 					var faces:Vector.<Surface> = geometry.faces;
 					
 					var pool:Vector.<Vector4> = new Vector.<Vector4>();
 					
 					// 顶点变换
-					for each (var v:Vector3 in vertics) {
+					for each (var v:Vector3 in vertices) {
 						var p:Vector4 = new Vector4();
 						p.copy(v);
 						// 模型变换

@@ -9,7 +9,7 @@ package lion.engine.geometries
 		public var id:uint;
 		public var name:String;
 		// 顶点
-		public var vertics:Vector.<Vector3>;
+		public var vertices:Vector.<Vector3>;
 		// 面
 		public var faces:Vector.<Surface>;
 		
@@ -17,7 +17,7 @@ package lion.engine.geometries
 		{
 			id = geometryIDCount++;
 			name = '';
-			vertics = new Vector.<Vector3>();
+			vertices = new Vector.<Vector3>();
 			faces = new Vector.<Surface>();
 		}
 	}

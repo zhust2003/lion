@@ -15,6 +15,9 @@ package lion.engine.core
 		// 法线
 		private var normal:Vector3;
 		
+		// 顶点发现
+		public var vertexNormals:Array
+		
 		// 顶点索引
 		public var a:int;
 		public var b:int;

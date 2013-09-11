@@ -11,7 +11,9 @@ package lion.engine.geometries
 	 */	
 	public class PlaneGeometry extends Geometry
 	{
+		// x
 		private var width:Number;
+		// y
 		private var height:Number;
 		private var widthSegments:Number;
 		private var heightSegments:Number;
@@ -40,7 +42,7 @@ package lion.engine.geometries
 					var x:Number = - halfWidth + ix * gridWidth;
 					var y:Number = - halfHeight + iy * gridHeight;
 					
-					vertics.push(new Vector3(x, y, 0));
+					vertices.push(new Vector3(x, - y, 0));
 				}
 			}
 			
