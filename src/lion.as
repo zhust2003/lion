@@ -26,7 +26,7 @@ package
 		public function lion()
 		{
 			InputManager.instance.init(stage);
-			_cube = new CubeGeometry();
+			_cube = new CubeGeometry(100, 100, 100);
 			addEventListener(Event.ENTER_FRAME, update);
 			_camera.position.set(0, 2, -5);
 			_camera.lookAt(new Vector3(0, 0, 0));
@@ -99,8 +99,8 @@ package
 			// 按z排序
 			var avgZ:Array = [];
 			var f:Array;
-			for (i = 0; i < _cube.faces.length; ++i) {
-				f = _cube.faces[i];
+			for (i = 0; i < _cube.subfaces.length; ++i) {
+				f = _cube.subfaces[i];
 				var avg:Number = ((t[f[0]].z + t[f[1]].z + t[f[2]].z + t[f[3]].z) / 4);
 				avgZ.push({"index":i, "z": avg});
 			}
@@ -116,8 +116,8 @@ package
 			});
 			
 			// 开始绘制
-			for (i = 0; i < _cube.faces.length; ++i) {
-				f = _cube.faces[avgZ[i].index];
+			for (i = 0; i < _cube.subfaces.length; ++i) {
+				f = _cube.subfaces[avgZ[i].index];
 				graphics.beginFill(_cube.colors[avgZ[i].index], 1.0);
 				graphics.moveTo(t[f[0]].x, t[f[0]].y);
 				graphics.lineTo(t[f[1]].x, t[f[1]].y);

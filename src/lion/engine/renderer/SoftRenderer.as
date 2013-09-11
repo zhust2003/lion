@@ -1,9 +1,18 @@
 package lion.engine.renderer
 {
 	import flash.display.Graphics;
+	import flash.display.Sprite;
+	import flash.geom.Rectangle;
 	
 	import lion.engine.cameras.Camera;
+	import lion.engine.core.Mesh;
+	import lion.engine.core.Object3D;
 	import lion.engine.core.Scene;
+	import lion.engine.core.Surface;
+	import lion.engine.geometries.Geometry;
+	import lion.engine.math.Matrix4;
+	import lion.engine.math.Vector3;
+	import lion.engine.math.Vector4;
 	
 	/**
 	 * 软件渲染 
@@ -12,22 +21,162 @@ package lion.engine.renderer
 	 */	
 	public class SoftRenderer implements IRenderer
 	{
-		private var _context:Graphics;
+		public var container:Sprite;
+		private var context:Graphics;
+		private var viewMatrix:Matrix4;
+		private var viewProjectionMatrix:Matrix4;
+		private var renderList:Vector.<RenderObject>;
+		private var renderElements:Vector.<RenderableElement>;
 		
 		public function SoftRenderer()
 		{
+			container = new Sprite();
+			context = container.graphics;
+			renderList = new Vector.<RenderObject>();
+			renderElements = new Vector.<RenderableElement>();
+			viewMatrix = new Matrix4();
+			viewProjectionMatrix = new Matrix4();
 		}
 		
-		public function render(scene:Scene, camera:Camera):void
+		public function render(scene:Scene, camera:Camera, viewport:Rectangle):void
 		{
+			// 清屏
+			context.clear();
+			
+			// 更新场景所有物件的矩阵
 			scene.updateMatrixWorld();
+			if (! camera) camera.updateMatrixWorld();
+			
+			// 摄像机矩阵
+			viewMatrix.copy(camera.matrixWorldInverse.getInverse(camera.matrixWorld));
+			// 再乘投影矩阵
+			viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, viewMatrix);
+			
+			// 获取场景类所有的需要渲染物件
+			renderList.length = 0;
+			fillRenderList(scene);
+			// TODO 对物体进行Z轴排序
+			
+			// 遍历所有需要渲染的对象，转化为基本渲染元素
+			renderElements.length = 0;
+			for each (var r:RenderObject in renderList) {
+				var o:Object3D = r.object;
+				var modelMatrix:Matrix4 = o.matrixWorld;
+				
+				if (o is Mesh) {
+					var geometry:Geometry = Mesh(o).geometry;
+					var vertics:Vector.<Vector3> = geometry.vertics;
+					var faces:Vector.<Surface> = geometry.faces;
+					
+					var pool:Vector.<Vector4> = new Vector.<Vector4>();
+					
+					// 顶点变换
+					for each (var v:Vector3 in vertics) {
+						var p:Vector4 = new Vector4();
+						p.copy(v);
+						// 模型变换
+						p.applyMatrix4(modelMatrix);
+						// 投影变换
+						p.applyMatrix4(viewProjectionMatrix);
+						// 除以齐次值
+						var invW:Number = 1 / p.w;
+						p.x *= invW;
+						p.y *= invW;
+						p.z *= invW;
+						p.w = 1;
+						
+						// 视口变换
+						var w:Number = viewport.width;
+						var h:Number = viewport.height;
+						var hw:Number = w / 2;
+						var hh:Number = h / 2;
+						var toViewPort:Matrix4 = new Matrix4(
+							hw - viewport.x, 0,  0, hw,
+							0, -(hh - viewport.y), 0, hh,
+							0, 0,   1, 0,
+							0, 0,   0, 1
+						);
+						p.applyMatrix4(toViewPort);
+						
+						pool.push(p);
+					}
+					
+					// 将三角形面片转成可渲染的面片数据
+					for each (var f:Surface in faces) {
+						var face:RenderableFace = new RenderableFace();
+						face.a = pool[f.a];
+						face.b = pool[f.b];
+						face.c = pool[f.c];
+						face.id = o.id;
+						renderElements.push(face);
+					}
+				}
+			}
+			
+			// TODO 对基本渲染元素进行排序
+			
+			
+			
+			// 光栅化，将所有的基本渲染元素光栅化到窗口
+			for each (var e:RenderableElement in renderElements) {
+				e.render(context);
+			}
 		}
 		
-		public function drawTriangle(x0:Number, y0:Number, x1:Number, y1:Number, x2:Number, y2:Number):void {
-//			_context.drawTriangles()
-			_context.moveTo(x0, y0);
-			_context.lineTo(x1, y1);
-			_context.lineTo(x2, y2);
+		private function fillRenderList(o:Object3D):void
+		{
+			if (o.visible === false) return;
+			if (o is Mesh) {
+				// TODO 视景体剔除
+				
+				
+				// 建立渲染对象
+				var r:RenderObject = new RenderObject();
+				r.id = o.id;
+				r.object = o;
+				renderList.push(r);
+			}
+			for each (var c:Object3D in o.children) {
+				fillRenderList(c);
+			}
 		}
+	}
+}
+import flash.display.Graphics;
+
+import lion.engine.core.Object3D;
+import lion.engine.math.Vector4;
+
+class RenderObject {
+	public var id:int;
+	public var object:Object3D;
+}
+
+class RenderableElement {
+	public function render(context:Graphics):void {
+		
+	}
+}
+
+class RenderableFace extends RenderableElement {
+	public var a:Vector4;
+	public var b:Vector4;
+	public var c:Vector4;
+	public var id:int;
+	
+	public function RenderableFace() {
+		a = new Vector4();
+		b = new Vector4();
+		c = new Vector4();
+	}
+	
+	override public function render(context:Graphics):void {
+//		context.beginFill(0xFFFFFF, 1.0);
+		context.lineStyle(1, 0xFFFFFF);
+		context.moveTo(a.x, a.y);
+		context.lineTo(b.x, b.y);
+		context.lineTo(c.x, c.y);
+		context.lineTo(a.x, a.y);
+//		context.endFill();
 	}
 }

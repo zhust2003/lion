@@ -15,9 +15,9 @@ package lion.engine.core
 	 */	
 	public class Object3D
 	{
-		private var parent:Object3D;
-		private var children:Vector.<Object3D>;
-		private var id:uint;
+		public var parent:Object3D;
+		public var children:Vector.<Object3D>;
+		public var id:uint;
 		public static var objectIDCount:uint = 0;
 		private var name:String;
 		public var position:Vector3;
