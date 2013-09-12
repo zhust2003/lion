@@ -117,6 +117,9 @@ package lion.engine.geometries
 			}
 			
 			// 合并顶点
+			
+			
+			computeCentroids();
 		}
 	}
 }

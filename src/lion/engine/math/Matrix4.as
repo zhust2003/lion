@@ -427,10 +427,10 @@ package lion.engine.math
 		public function multiplyScalar(s:Number):Matrix4 {
 			var te:Vector.<Number> = this.elements;
 			
-			te[0] *= s; te[4] *= s; te[8] *= s; te[12] *= s;
-			te[1] *= s; te[5] *= s; te[9] *= s; te[13] *= s;
-			te[2] *= s; te[6] *= s; te[10] *= s; te[14] *= s;
-			te[3] *= s; te[7] *= s; te[11] *= s; te[15] *= s;
+			te[0] *= s; te[1] *= s; te[2] *= s; te[3] *= s;
+			te[4] *= s; te[5] *= s; te[6] *= s; te[7] *= s;
+			te[8] *= s; te[9] *= s; te[10] *= s; te[11] *= s;
+			te[12] *= s; te[13] *= s; te[14] *= s; te[15] *= s;
 			
 			return this;
 		}

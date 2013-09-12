@@ -13,7 +13,7 @@ package lion.engine.core
 		// 颜色
 		private var color:Color;
 		// 法线
-		private var normal:Vector3;
+		public var normal:Vector3;
 		
 		// 顶点发现
 		public var vertexNormals:Array
@@ -23,6 +23,9 @@ package lion.engine.core
 		public var b:int;
 		public var c:int;
 		
+		// 面心
+		public var centroid:Vector3;
+		
 		public function Surface(a:int, b:int, c:int, normal:Vector3 = null, color:Color = null)
 		{
 			this.a = a;
@@ -31,6 +34,7 @@ package lion.engine.core
 			
 			this.normal = normal || new Vector3();
 			this.color = color || new Color();
+			this.centroid = new Vector3();
 		}
 	}
 }

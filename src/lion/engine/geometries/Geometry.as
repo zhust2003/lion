@@ -20,5 +20,15 @@ package lion.engine.geometries
 			vertices = new Vector.<Vector3>();
 			faces = new Vector.<Surface>();
 		}
+		
+		public function computeCentroids():void {
+			for each (var f:Surface in faces) {
+				f.centroid.set(0, 0, 0);
+				f.centroid.add(vertices[f.a]);
+				f.centroid.add(vertices[f.b]);
+				f.centroid.add(vertices[f.c]);
+				f.centroid.divide(3);
+			}
+		}
 	}
 }

@@ -101,6 +101,7 @@ package lion.engine.geometries
 					}
 				}
 			}
+			computeCentroids();
 		}
 	}
 }

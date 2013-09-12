@@ -140,12 +140,48 @@ package lion.engine.math
 			return this;
 		}
 		
+		public function applyProjection(m:Matrix4):Vector3 {
+			var x:Number = this.x, y:Number = this.y, z:Number = this.z;
+			
+			var e:Vector.<Number> = m.elements;
+			var d:Number = 1 / (e[12] * x + e[13] * y + e[14] * z + e[15]); // perspective divide
+			
+			this.x = (e[0] * x + e[1] * y + e[2]  * z + e[3]) * d;
+			this.y = (e[4] * x + e[5] * y + e[6]  * z + e[7]) * d;
+			this.z = (e[8] * x + e[9] * y + e[10] * z + e[11]) * d;
+			
+			return this;
+		}
+		
+		public function getPositionFromMatrix(m:Matrix4):Vector3 {
+			this.x = m.elements[3];
+			this.y = m.elements[7];
+			this.z = m.elements[11];
+			
+			return this;
+		}
+		
 		public function clone():Vector3 {
 			return new Vector3(x, y, z);
 		}
 		
 		public function toString():String {
 			return "[Vector3 (x:" + x + ", y:" + y + ", z:" + z + ")]";
+		}
+		
+		public function applyMatrix3(m:Matrix3):Vector3
+		{
+			var x:Number = this.x;
+			var y:Number = this.y;
+			var z:Number = this.z;
+			
+			var e:Vector.<Number> = m.elements;
+			
+			this.x = e[0] * x + e[1] * y + e[2] * z;
+			this.y = e[3] * x + e[4] * y + e[5] * z;
+			this.z = e[6] * x + e[7] * y + e[8] * z;
+			
+			return this;
 		}
 	}
 }

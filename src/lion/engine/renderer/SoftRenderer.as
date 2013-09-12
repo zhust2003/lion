@@ -10,6 +10,13 @@ package lion.engine.renderer
 	import lion.engine.core.Scene;
 	import lion.engine.core.Surface;
 	import lion.engine.geometries.Geometry;
+	import lion.engine.lights.DirectionalLight;
+	import lion.engine.lights.Light;
+	import lion.engine.lights.PointLight;
+	import lion.engine.lights.SpotLight;
+	import lion.engine.materials.BaseMaterial;
+	import lion.engine.math.Color;
+	import lion.engine.math.Matrix3;
 	import lion.engine.math.Matrix4;
 	import lion.engine.math.Vector3;
 	import lion.engine.math.Vector4;
@@ -27,6 +34,7 @@ package lion.engine.renderer
 		private var viewProjectionMatrix:Matrix4;
 		private var renderList:Vector.<RenderObject>;
 		private var renderElements:Vector.<RenderableElement>;
+		private var lights:Vector.<Light>;
 		
 		public function SoftRenderer()
 		{
@@ -36,6 +44,7 @@ package lion.engine.renderer
 			renderElements = new Vector.<RenderableElement>();
 			viewMatrix = new Matrix4();
 			viewProjectionMatrix = new Matrix4();
+			lights = new Vector.<Light>;
 		}
 		
 		public function render(scene:Scene, camera:Camera, viewport:Rectangle):void
@@ -45,7 +54,7 @@ package lion.engine.renderer
 			
 			// 更新场景所有物件的矩阵
 			scene.updateMatrixWorld();
-			if (! camera) camera.updateMatrixWorld();
+			if (! camera.parent) camera.updateMatrixWorld();
 			
 			// 摄像机矩阵
 			viewMatrix.copy(camera.matrixWorldInverse.getInverse(camera.matrixWorld));
@@ -54,6 +63,7 @@ package lion.engine.renderer
 			
 			// 获取场景类所有的需要渲染物件
 			renderList.length = 0;
+			lights.length = 0;
 			fillRenderList(scene);
 			// TODO 对物体进行Z轴排序
 			
@@ -62,6 +72,7 @@ package lion.engine.renderer
 			for each (var r:RenderObject in renderList) {
 				var o:Object3D = r.object;
 				var modelMatrix:Matrix4 = o.matrixWorld;
+				var normalMatrix:Matrix3 = new Matrix3().getNormalMatrix(modelMatrix);
 				
 				if (o is Mesh) {
 					var geometry:Geometry = Mesh(o).geometry;
@@ -108,18 +119,50 @@ package lion.engine.renderer
 						face.b = pool[f.b];
 						face.c = pool[f.c];
 						face.id = o.id;
+						// 世界坐标
+						face.centroid.copy(f.centroid).applyMatrix4(modelMatrix);
+						face.normal.copy(f.normal).applyMatrix3(normalMatrix).normalize();
+						face.material = Mesh(o).material;
+						
+						// 相对摄像机的坐标
+						var centroid:Vector3 = new Vector3().copy(face.centroid).applyProjection(viewProjectionMatrix);
+						face.z = centroid.z;
 						renderElements.push(face);
+//						trace(face.z, face.centroid.z, f.centroid.z, viewProjectionMatrix.elements);
 					}
 				}
 			}
 			
-			// TODO 对基本渲染元素进行排序
-			
-			
+			// 对基本渲染元素进行排序
+			renderElements.sort(painterSort);
 			
 			// 光栅化，将所有的基本渲染元素光栅化到窗口
 			for each (var e:RenderableElement in renderElements) {
-				e.render(context);
+				if (e is RenderableFace) {
+					var color:Color = new Color();
+					calculateLight(RenderableFace(e).centroid, RenderableFace(e).normal, color);
+					if (RenderableFace(e).material is BaseMaterial) {
+//						trace(color);
+						context.beginFill(color.toRGB());
+						context.lineStyle(1, 0xFFFFFF);
+					} else {
+						context.lineStyle(1, 0xFFFFFF);
+					}
+					e.render(context);
+					if (RenderableFace(e).material is BaseMaterial) {
+						context.endFill();
+					}
+				}
+			}
+		}
+		
+		private function painterSort(a:RenderableElement, b:RenderableElement):int {
+			if (a.z !== b.z) {
+				return b.z - a.z > 0 ? -1 : 1;
+			} else if (a.id !== b.id) {
+				return a.id - b.id > 0 ? -1 : 1;
+			} else {
+				return 0;
 			}
 		}
 		
@@ -136,8 +179,44 @@ package lion.engine.renderer
 				r.object = o;
 				renderList.push(r);
 			}
+			if (o is Light) {
+				lights.push(o);
+			}
 			for each (var c:Object3D in o.children) {
 				fillRenderList(c);
+			}
+		}
+		
+		/**
+		 * 计算光照 
+		 * @param position
+		 * @param normal
+		 * @param color
+		 * 
+		 */		
+		private function calculateLight(position:Vector3, normal:Vector3, color:Color):void {
+			var lightColor:Color = new Color();
+			var lightPosition:Vector3;
+			var amount:Number;
+			
+			for each (var l:Light in lights) {
+				lightColor.copy(l.color);
+				
+				if (l is DirectionalLight) {
+					lightPosition = new Vector3().getPositionFromMatrix(l.matrixWorld).normalize();
+					amount = normal.dot(lightPosition);
+					if (amount <= 0) continue;
+					amount *= DirectionalLight(l).intensity;
+					color.add(lightColor.multiplyScalar(amount));
+				} else if (l is PointLight) {
+					lightPosition = new Vector3().getPositionFromMatrix(l.matrixWorld);
+					amount = normal.dot(lightPosition.subVectors(lightPosition, position).normalize());
+					if (amount <= 0) continue;
+					amount *= PointLight(l).distance == 0 ? 1 : 1 - Math.min(position.dist(lightPosition) / PointLight(l).distance, 1);
+					if ( amount == 0 ) continue;
+					amount *= PointLight(l).intensity;
+					color.add(lightColor.multiplyScalar(amount));
+				}
 			}
 		}
 	}
@@ -145,6 +224,8 @@ package lion.engine.renderer
 import flash.display.Graphics;
 
 import lion.engine.core.Object3D;
+import lion.engine.materials.Material;
+import lion.engine.math.Vector3;
 import lion.engine.math.Vector4;
 
 class RenderObject {
@@ -153,6 +234,8 @@ class RenderObject {
 }
 
 class RenderableElement {
+	public var id:int;
+	public var z:Number;
 	public function render(context:Graphics):void {
 		
 	}
@@ -162,17 +245,20 @@ class RenderableFace extends RenderableElement {
 	public var a:Vector4;
 	public var b:Vector4;
 	public var c:Vector4;
-	public var id:int;
+	public var centroid:Vector3;
+	public var normal:Vector3;
+	public var material:Material;
 	
 	public function RenderableFace() {
 		a = new Vector4();
 		b = new Vector4();
 		c = new Vector4();
+		centroid = new Vector3();
+		normal = new Vector3();
 	}
 	
 	override public function render(context:Graphics):void {
 //		context.beginFill(0xFFFFFF, 1.0);
-		context.lineStyle(1, 0xFFFFFF);
 		context.moveTo(a.x, a.y);
 		context.lineTo(b.x, b.y);
 		context.lineTo(c.x, c.y);

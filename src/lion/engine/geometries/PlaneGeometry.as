@@ -66,6 +66,8 @@ package lion.engine.geometries
 					faces.push(face);
 				}
 			}
+			
+			computeCentroids();
 		}
 	}
 }
