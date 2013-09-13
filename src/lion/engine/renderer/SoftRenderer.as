@@ -16,6 +16,7 @@ package lion.engine.renderer
 	import lion.engine.lights.SpotLight;
 	import lion.engine.materials.BaseMaterial;
 	import lion.engine.math.Color;
+	import lion.engine.math.Frustum;
 	import lion.engine.math.Matrix3;
 	import lion.engine.math.Matrix4;
 	import lion.engine.math.Vector3;
@@ -35,6 +36,7 @@ package lion.engine.renderer
 		private var renderList:Vector.<RenderObject>;
 		private var renderElements:Vector.<RenderableElement>;
 		private var lights:Vector.<Light>;
+		private var frustum:Frustum;
 		
 		public function SoftRenderer()
 		{

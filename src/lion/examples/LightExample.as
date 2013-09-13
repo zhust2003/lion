@@ -6,6 +6,8 @@ package lion.examples
 	import flash.text.TextField;
 	import flash.text.TextFormat;
 	
+	import lion.engine.cameras.Camera;
+	import lion.engine.cameras.OrthographicCamera;
 	import lion.engine.cameras.PerspectiveCamera;
 	import lion.engine.core.Mesh;
 	import lion.engine.core.Scene;
@@ -25,7 +27,7 @@ package lion.examples
 	{
 		private var scene:Scene;
 		private var cube:Mesh;
-		private var camera:PerspectiveCamera;
+		private var camera:Camera;
 		private var renderer:SoftRenderer;
 		private var viewport:Rectangle;
 		private var light:DirectionalLight;
@@ -74,6 +76,7 @@ package lion.examples
 			scene.add(sphere);
 			
 			// 创建一个摄像机
+//			camera = new OrthographicCamera(-50, 50, -50, 50);
 			camera = new PerspectiveCamera(60, 1);
 			camera.position.set(0, 10, 30);
 			camera.lookAt(new Vector3(0, 0, 0));
@@ -93,6 +96,7 @@ package lion.examples
 			renderer = new SoftRenderer();
 			addChild(renderer.container);
 			
+			// 信息栏
 			info = new TextField();
 			var format:TextFormat = new TextFormat();
 			format.color = 0xFFFFFF;
@@ -109,6 +113,9 @@ package lion.examples
 		{
 			cube.rotation.y += 0.01;
 			cube.rotation.x += 0.01;
+//			cube.scale.x += 0.001;
+//			cube.scale.y += 0.001;
+//			cube.scale.z += 0.001;
 			info.text = cube.rotation.y.toFixed(2);
 			sphere.rotation.y += 0.02;
 			renderer.render(scene, camera, viewport);
