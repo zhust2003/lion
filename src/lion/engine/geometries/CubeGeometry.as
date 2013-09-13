@@ -55,6 +55,8 @@ package lion.engine.geometries
 			var halfWidth:Number = width / 2;
 			var halfHeight:Number = height / 2;
 			var halfDepth:Number = depth / 2;
+			
+			// 从外往内看，按顺时针排列顶点
 			buildPlane('z', 'y', -1, -1, this.depth, this.height, halfWidth);
 			buildPlane('z', 'y',  1, -1, this.depth, this.height, -halfWidth);
 			buildPlane('x', 'z',  1,  1, this.width, this.depth, halfHeight);
@@ -110,9 +112,10 @@ package lion.engine.geometries
 					// 两个三角面
 					var face:Surface = new Surface(a + offset, b + offset, d + offset, normal);
 					faces.push(face);
-					
+//					trace(u, v, face.id);
 					face = new Surface(b + offset, c + offset, d + offset, normal);
 					faces.push(face);
+//					trace(u, v, face.id);
 				}
 			}
 			

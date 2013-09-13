@@ -79,12 +79,14 @@ package lion.engine.geometries
 						
 						f = new Surface(v1, v3, v4);
 						f.vertexNormals = [n1, n3, n4];
+						f.normal = new Vector3().add(n1).add(n3).add(n4).divide(3);
 						this.faces.push(f);
 						
 					} else if (Math.abs(this.vertices[v3].y) === this.radius) {
 						
 						f = new Surface(v1, v2, v3);
 						f.vertexNormals = [n1, n2, n3];
+						f.normal = new Vector3().add(n1).add(n2).add(n3).divide(3);
 						this.faces.push(f);
 						
 					} else {
@@ -92,10 +94,12 @@ package lion.engine.geometries
 						// 这里就是四边形了
 						f = new Surface(v1, v2, v4);
 						f.vertexNormals = [n1, n2, n4];
+						f.normal = new Vector3().add(n1).add(n2).add(n3).divide(3);
 						this.faces.push(f);
 						
 						f = new Surface(v2, v3, v4);
 						f.vertexNormals = [n2, n3, n4];
+						f.normal = new Vector3().add(n2).add(n3).add(n4).divide(3);
 						this.faces.push(f);
 						
 					}

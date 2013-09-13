@@ -23,14 +23,20 @@ package lion.engine.core
 		public var b:int;
 		public var c:int;
 		
+//		public var id:int;
+		
 		// 面心
 		public var centroid:Vector3;
+		
+//		public static var surfaceID:int;
 		
 		public function Surface(a:int, b:int, c:int, normal:Vector3 = null, color:Color = null)
 		{
 			this.a = a;
 			this.b = b;
 			this.c = c;
+			
+//			id = surfaceID++;
 			
 			this.normal = normal || new Vector3();
 			this.color = color || new Color();

@@ -109,15 +109,28 @@ package lion.engine.renderer
 						);
 						p.applyMatrix4(toViewPort);
 						
+						// TODO 顶点的视景体剔除
+						
 						pool.push(p);
 					}
 					
 					// 将三角形面片转成可渲染的面片数据
 					for each (var f:Surface in faces) {
+						// 背面剔除
+						// 正面的顶点方向为顺时针，所有逆时针的面不加入渲染面
+						var va:Vector4 = pool[f.a];
+						var vb:Vector4 = pool[f.b];
+						var vc:Vector4 = pool[f.c];
+						var ac:Vector3 = new Vector3().subVectors(new Vector3(vc.x, vc.y, vc.z), new Vector3(va.x, va.y, va.z));
+						var cb:Vector3 = new Vector3().subVectors(new Vector3(vb.x, vb.y, vb.z), new Vector3(vc.x, vc.y, vc.z));
+						if (ac.cross(cb).z < 0) {
+							continue;
+						}
+						
 						var face:RenderableFace = new RenderableFace();
-						face.a = pool[f.a];
-						face.b = pool[f.b];
-						face.c = pool[f.c];
+						face.a = va;
+						face.b = vb;
+						face.c = vc;
 						face.id = o.id;
 						// 世界坐标
 						face.centroid.copy(f.centroid).applyMatrix4(modelMatrix);
@@ -128,7 +141,6 @@ package lion.engine.renderer
 						var centroid:Vector3 = new Vector3().copy(face.centroid).applyProjection(viewProjectionMatrix);
 						face.z = centroid.z;
 						renderElements.push(face);
-//						trace(face.z, face.centroid.z, f.centroid.z, viewProjectionMatrix.elements);
 					}
 				}
 			}
@@ -137,14 +149,14 @@ package lion.engine.renderer
 			renderElements.sort(painterSort);
 			
 			// 光栅化，将所有的基本渲染元素光栅化到窗口
+			var i:int = 0;
 			for each (var e:RenderableElement in renderElements) {
 				if (e is RenderableFace) {
 					var color:Color = new Color();
 					calculateLight(RenderableFace(e).centroid, RenderableFace(e).normal, color);
 					if (RenderableFace(e).material is BaseMaterial) {
-//						trace(color);
 						context.beginFill(color.toRGB());
-						context.lineStyle(1, 0xFFFFFF);
+//						context.lineStyle(1, 0xFFFFFF);
 					} else {
 						context.lineStyle(1, 0xFFFFFF);
 					}
@@ -156,6 +168,13 @@ package lion.engine.renderer
 			}
 		}
 		
+		/**
+		 * 画家排序 
+		 * @param a
+		 * @param b
+		 * @return 
+		 * 
+		 */		
 		private function painterSort(a:RenderableElement, b:RenderableElement):int {
 			if (a.z !== b.z) {
 				return b.z - a.z > 0 ? -1 : 1;
