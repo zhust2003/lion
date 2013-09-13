@@ -112,16 +112,13 @@ package lion.engine.geometries
 					// 两个三角面
 					var face:Surface = new Surface(a + offset, b + offset, d + offset, normal);
 					faces.push(face);
-//					trace(u, v, face.id);
 					face = new Surface(b + offset, c + offset, d + offset, normal);
 					faces.push(face);
-//					trace(u, v, face.id);
 				}
 			}
 			
-			// 合并顶点
-			
-			
+			// TODO 合并顶点
+			// 计算中心点	
 			computeCentroids();
 		}
 	}

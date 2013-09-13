@@ -132,6 +132,7 @@ package lion.engine.renderer
 						face.b = vb;
 						face.c = vc;
 						face.id = o.id;
+						
 						// 世界坐标
 						face.centroid.copy(f.centroid).applyMatrix4(modelMatrix);
 						face.normal.copy(f.normal).applyMatrix3(normalMatrix).normalize();
@@ -170,6 +171,7 @@ package lion.engine.renderer
 		
 		/**
 		 * 画家排序 
+		 * 由远到近
 		 * @param a
 		 * @param b
 		 * @return 

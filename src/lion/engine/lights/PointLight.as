@@ -10,7 +10,7 @@ package lion.engine.lights
 		public var intensity:Number;
 		public var distance:Number;
 		
-		public function PointLight(color:uint, intensity:Number, distance:Number)
+		public function PointLight(color:uint, intensity:Number = 1, distance:Number = 0)
 		{
 			super(color);
 			

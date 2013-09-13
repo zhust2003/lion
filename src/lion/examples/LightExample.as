@@ -13,6 +13,7 @@ package lion.examples
 	import lion.engine.geometries.PlaneGeometry;
 	import lion.engine.geometries.SphereGeometry;
 	import lion.engine.lights.DirectionalLight;
+	import lion.engine.lights.PointLight;
 	import lion.engine.materials.BaseMaterial;
 	import lion.engine.materials.Material;
 	import lion.engine.materials.WireframeMaterial;
@@ -31,6 +32,7 @@ package lion.examples
 		private var info:TextField;
 		private var plane:Mesh;
 		private var sphere:Mesh;
+		private var light2:PointLight;
 		public function LightExample()
 		{
 			addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
@@ -55,7 +57,7 @@ package lion.examples
 			cube.position.z = -10;
 			scene.add(cube);
 			
-			var p2:PlaneGeometry = new PlaneGeometry(30, 30);
+			var p2:PlaneGeometry = new PlaneGeometry(50, 50, 5, 5);
 			var m2:Material = new BaseMaterial();
 			plane = new Mesh(p2, m2);
 			plane.rotation.x = -1.57;
@@ -81,6 +83,11 @@ package lion.examples
 			light = new DirectionalLight(0xffffff);
 			light.position.set(0, 10, 30).normalize();
 			scene.add(light);
+			
+			// 创建一个点光源
+			light2 = new PointLight(0xf70000, 1, 50);
+			light2.position.set(0, 30, -10);
+			scene.add(light2);
 			
 			// 创建一个渲染器
 			renderer = new SoftRenderer();
