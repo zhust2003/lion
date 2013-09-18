@@ -47,6 +47,7 @@ package lion.engine.renderer
 			viewMatrix = new Matrix4();
 			viewProjectionMatrix = new Matrix4();
 			lights = new Vector.<Light>;
+			frustum = new Frustum();
 		}
 		
 		public function render(scene:Scene, camera:Camera, viewport:Rectangle):void
@@ -62,13 +63,16 @@ package lion.engine.renderer
 			viewMatrix.copy(camera.matrixWorldInverse.getInverse(camera.matrixWorld));
 			// 再乘投影矩阵
 			viewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, viewMatrix);
+			// 设置视景体
+			frustum.setFromMatrix(viewProjectionMatrix);
 			
 			// 获取场景类所有的需要渲染物件
 			renderList.length = 0;
 			lights.length = 0;
 			fillRenderList(scene);
-			// TODO 对物体进行Z轴排序
-			
+			// 对物体进行Z轴排序
+			renderList.sort(painterSortByObject);
+
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
 			renderElements.length = 0;
 			for each (var r:RenderObject in renderList) {
@@ -189,18 +193,30 @@ package lion.engine.renderer
 			}
 		}
 		
+		private function painterSortByObject(a:RenderObject, b:RenderObject):int {
+			if (a.z !== b.z) {
+				return b.z - a.z > 0 ? -1 : 1;
+			} else if (a.id !== b.id) {
+				return a.id - b.id > 0 ? -1 : 1;
+			} else {
+				return 0;
+			}
+		}
+		
 		private function fillRenderList(o:Object3D):void
 		{
 			if (o.visible === false) return;
 			if (o is Mesh) {
-				// TODO 视景体剔除
-				
-				
-				// 建立渲染对象
-				var r:RenderObject = new RenderObject();
-				r.id = o.id;
-				r.object = o;
-				renderList.push(r);
+				// 视景体剔除
+				if (frustum.intersectsObject(o as Mesh)) {
+					
+					// 建立渲染对象
+					var r:RenderObject = new RenderObject();
+					r.id = o.id;
+					r.object = o;
+					r.z = Mesh(o).position.z;
+					renderList.push(r);
+				}
 			}
 			if (o is Light) {
 				lights.push(o);
@@ -254,6 +270,7 @@ import lion.engine.math.Vector4;
 class RenderObject {
 	public var id:int;
 	public var object:Object3D;
+	public var z:Number;
 }
 
 class RenderableElement {

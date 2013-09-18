@@ -1,6 +1,8 @@
 package lion.engine.geometries
 {
 	import lion.engine.core.Surface;
+	import lion.engine.math.Box;
+	import lion.engine.math.Sphere;
 	import lion.engine.math.Vector3;
 
 	public class Geometry
@@ -13,6 +15,11 @@ package lion.engine.geometries
 		// 面
 		public var faces:Vector.<Surface>;
 		
+		// 包围球
+		public var boundingSphere:Sphere;
+		// 包围盒
+		public var boundingBox:Box;
+		
 		public function Geometry()
 		{
 			id = geometryIDCount++;
@@ -21,6 +28,10 @@ package lion.engine.geometries
 			faces = new Vector.<Surface>();
 		}
 		
+		/**
+		 * 计算质心 
+		 * 
+		 */		
 		public function computeCentroids():void {
 			for each (var f:Surface in faces) {
 				f.centroid.set(0, 0, 0);
@@ -29,6 +40,18 @@ package lion.engine.geometries
 				f.centroid.add(vertices[f.c]);
 				f.centroid.divide(3);
 			}
+		}
+		
+		/**
+		 * 计算包围球 
+		 * @return 
+		 * 
+		 */		
+		public function computeBoundingSphere():void {
+			if (! boundingSphere) {
+				boundingSphere = new Sphere();
+			}
+			boundingSphere.setFromPoints(vertices);
 		}
 	}
 }

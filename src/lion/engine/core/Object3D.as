@@ -111,7 +111,7 @@ package lion.engine.core
 		 */		
 		public function lookAt(v:Vector3):void {
 			var m:Matrix4 = new Matrix4();
-			m.lookAt(v, this.position, this.up);
+			m.lookAt(this.position, v, this.up);
 			
 			quaternion.setFromRotationMatrix(m);
 		}

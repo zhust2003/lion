@@ -44,6 +44,14 @@ package lion.engine.math
 			return this;
 		}
 		
+		public function addVectors(a:Vector3, b:Vector3):Vector3 {
+			this.x = a.x + b.x;
+			this.y = a.y + b.y;
+			this.z = a.z + b.z;
+			
+			return this;
+		}
+		
 		public function sub(v:Vector3):Vector3 {
 			this.x -= v.x;
 			this.y -= v.y;
@@ -182,6 +190,11 @@ package lion.engine.math
 			this.z = e[6] * x + e[7] * y + e[8] * z;
 			
 			return this;
+		}
+		
+		public function negate():Vector3
+		{
+			return this.multiply(-1);
 		}
 	}
 }

@@ -17,6 +17,8 @@ package lion.engine.math
 		{
 			elements = new Vector.<Number>(16);
 			
+			// row-major
+			// 列优先实在看着不舒服
 			elements[0] = n11; elements[1] = n12; elements[2] = n13; elements[3] = n14;
 			elements[4] = n21; elements[5] = n22; elements[6] = n23; elements[7] = n24;
 			elements[8] = n31; elements[9] = n32; elements[10] = n33; elements[11] = n34;
@@ -514,7 +516,7 @@ package lion.engine.math
 		 * @return 
 		 * 
 		 */		
-		public function makePerspective(left:Number, right:Number, top:Number, bottom:Number, near:Number, far:Number):Matrix4 {
+		public function makePerspective(left:Number, right:Number, bottom:Number, top:Number, near:Number, far:Number):Matrix4 {
 			var te:Vector.<Number> = this.elements;
 			var x:Number = 2 * near / (right - left);
 			var y:Number = 2 * near / (top - bottom);
@@ -532,6 +534,16 @@ package lion.engine.math
 			return this;
 		}
 		
+		public function getMaxScaleOnAxis():Number {
+			var te:Vector.<Number> = this.elements;
+			
+			var scaleXSq:Number = te[0] * te[0] + te[4] * te[4] + te[8] * te[8];
+			var scaleYSq:Number = te[1] * te[1] + te[5] * te[5] + te[9] * te[9];
+			var scaleZSq:Number = te[2] * te[2] + te[6] * te[6] + te[10] * te[10];
+			
+			return Math.sqrt(Math.max(scaleXSq, Math.max(scaleYSq, scaleZSq)));
+		}
+		
 		/**
 		 * 矩阵拷贝
 		 * 新建对象 
@@ -545,6 +557,14 @@ package lion.engine.math
 				elements[8], elements[9], elements[10], elements[11],
 				elements[12], elements[13], elements[14], elements[15]
 			);
+		}
+		
+		public function toString():String {
+			return "[Matrix4]\n" +
+					elements[0] + "," + elements[1] + "," + elements[2] + "," + elements[3] + "\n" +
+					elements[4] + "," + elements[5] + "," + elements[6] + "," + elements[7] + "\n" +
+					elements[8] + "," + elements[9] + "," + elements[10] + "," + elements[11] + "\n" +
+					elements[12] + "," + elements[13] + "," + elements[14] + "," + elements[15];
 		}
 	}
 }
