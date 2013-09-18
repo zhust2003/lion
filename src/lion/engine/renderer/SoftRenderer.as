@@ -24,6 +24,7 @@ package lion.engine.renderer
 	
 	/**
 	 * 软件渲染 
+	 * 这个渲染方式的主要方式是通过代码模拟opengl/d3d的硬件渲染API，增强对3d流水线的理解
 	 * @author Dalton
 	 * 
 	 */	
@@ -193,6 +194,13 @@ package lion.engine.renderer
 			}
 		}
 		
+		/**
+		 * 物体排序 
+		 * @param a
+		 * @param b
+		 * @return 
+		 * 
+		 */		
 		private function painterSortByObject(a:RenderObject, b:RenderObject):int {
 			if (a.z !== b.z) {
 				return b.z - a.z > 0 ? -1 : 1;

@@ -39,7 +39,7 @@ package lion.examples
 		
 		public function init():void {
 			scene = new Scene();
-			
+
 			// 创建一个面片
 			var p:CubeGeometry = new CubeGeometry(10, 10, 10);
 			var m:Material = new WireframeMaterial();
