@@ -134,6 +134,7 @@ package lion.engine.renderer
 							continue;
 						}
 						
+						// 基本的渲染面
 						var face:RenderableFace = new RenderableFace();
 						face.a = va;
 						face.b = vb;
