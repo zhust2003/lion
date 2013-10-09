@@ -5,6 +5,7 @@ package lion.engine.geometries
 
 	/**
 	 * 立方体 
+	 * 逆时针建模 CCW 
 	 * @author Dalton
 	 * 
 	 */
@@ -56,7 +57,7 @@ package lion.engine.geometries
 			var halfHeight:Number = height / 2;
 			var halfDepth:Number = depth / 2;
 			
-			// 从外往内看，按顺时针排列顶点
+			// 从外往内看，按逆时针排列顶点
 			buildPlane('z', 'y', -1, -1, this.depth, this.height, halfWidth);
 			buildPlane('z', 'y',  1, -1, this.depth, this.height, -halfWidth);
 			buildPlane('x', 'z',  1,  1, this.width, this.depth, halfHeight);
@@ -71,8 +72,8 @@ package lion.engine.geometries
 			var halfHeight:Number = height / 2;
 			var gridX:int = this.widthSegments,
 				gridY:int = this.heightSegments;
-			var gridX1:int = this.widthSegments+1,
-				gridY1:int = this.heightSegments+1;
+			var gridX1:int = this.widthSegments + 1,
+				gridY1:int = this.heightSegments + 1;
 			var w:String;
 			var offset:int = vertices.length;
 			if ((u === 'x' && v === 'y') || (u === 'y' && v === 'x')) {

@@ -5,6 +5,7 @@ package lion.engine.geometries
 
 	/**
 	 * 面板 
+	 * 逆时针建模 CCW 
 	 * 
 	 * @author Dalton
 	 * 
