@@ -566,5 +566,12 @@ package lion.engine.math
 					elements[8] + "," + elements[9] + "," + elements[10] + "," + elements[11] + "\n" +
 					elements[12] + "," + elements[13] + "," + elements[14] + "," + elements[15];
 		}
+		
+		public function toMatrix3D():Matrix3D {
+			return new Matrix3D(Vector.<Number>([elements[0], elements[4], elements[8], elements[12],
+								elements[1], elements[5], elements[9], elements[13],
+								elements[2], elements[6], elements[10], elements[14],
+								elements[3], elements[7], elements[11], elements[15]]));
+		}
 	}
 }

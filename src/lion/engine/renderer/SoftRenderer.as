@@ -124,7 +124,7 @@ package lion.engine.renderer
 					// 将三角形面片转成可渲染的面片数据
 					for each (var f:Surface in faces) {
 						// 背面剔除
-						// 正面的顶点方向为顺时针，所有逆时针的面不加入渲染面
+						// 正面的顶点方向为逆时针，所有顺时针的面不加入渲染面
 						var va:Vector4 = pool[f.a];
 						var vb:Vector4 = pool[f.b];
 						var vc:Vector4 = pool[f.c];
@@ -212,6 +212,12 @@ package lion.engine.renderer
 			}
 		}
 		
+		/**
+		 * 模型转为基本渲染对象 
+		 * 由于基本的模型是树形结构，所有需要平铺得到所有的渲染对象
+		 * @param o
+		 * 
+		 */		
 		private function fillRenderList(o:Object3D):void
 		{
 			if (o.visible === false) return;
@@ -269,6 +275,7 @@ package lion.engine.renderer
 		}
 	}
 }
+
 import flash.display.Graphics;
 
 import lion.engine.core.Object3D;
