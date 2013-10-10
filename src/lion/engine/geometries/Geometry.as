@@ -12,6 +12,8 @@ package lion.engine.geometries
 		public var name:String;
 		// 顶点
 		public var vertices:Vector.<Vector3>;
+		// 每个顶点的法线
+		public var normals:Vector.<Vector3>;
 		// 面
 		public var faces:Vector.<Surface>;
 		

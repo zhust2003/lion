@@ -42,12 +42,55 @@ package lion.engine.renderer
 		private var vertexes:VertexBuffer3D;
 		private var finalTransform:Matrix3D = new Matrix3D();
 		
+		// Gouraud Shader
 		private const VERTEX_SHADER:String =
-			"m44 op, va0, vc0    \n" +    // 4x4 matrix transform 
-			"mov v0, va1"; //copy color to varying variable v0
+			"m44 op, va0, vc2    \n" +    // 4x4 matrix transform 
+		
+			// 直线光，flat着色
+			// 光源朝向顶点坐标的向量
+			'm44 vt0, va0, vc6 \n' +
+			'sub vt1, vc0, vt0 \n' + 
+			'nrm vt1.xyz, vt1.xyz \n' +
+			
+			// 法线变换并归一化
+			'm33 vt2.xyz, va2.xyz, vc10 \n' +
+			'nrm vt2.xyz, vt2.xyz \n' +
+			
+			// 点积 CosA = L . Normal
+			'dp3 vt3.x, vt1.xyz, vt2.xyz \n' +	
+			'sat vt3.x, vt3.x \n' +
+			'mul vt4.rgb, vc1.rgb, vt3.xxx \n' + 
+			'mov v0, vt4.rgb \n';
+		
+	
 		
 		private const FRAGMENT_SHADER:String = 
-			"mov oc, v0"; //Set the output color to the value interpolated from the three triangle vertices 
+			"mov oc, v0"; //Set the output color to the value interpolated from the three triangle vertices
+		
+		
+		// Phong Shader
+//		private const VERTEX_SHADER:String =
+//			"m44 op, va0, vc2    \n" +    // 4x4 matrix transform 
+//			'mov v0, va0 \n' +
+//			
+//			// 法线变换并归一化
+//			'm33 vt2.xyz, va2.xyz, vc10 \n' +
+//			'nrm vt2.xyz, vt2.xyz \n' +
+//			'mov v2, vt2.xyz \n' +
+//			
+//			'mov v1, va2';
+//		
+//		private const FRAGMENT_SHADER:String = 
+//			// 直线光，flat着色
+//			// 光源朝向顶点坐标的向量
+//			'm44 ft0, v0, fc6 \n' +
+//			'sub ft1, fc0, ft0 \n' + 
+//			'nrm ft1.xyz, ft1.xyz \n' +
+//			
+//			'dp3 ft3.x, ft1.xyz, v2.xyz \n' +	
+//			'sat ft3.x, ft3.x \n' +
+//			'mul ft4.rgb, fc1.rgb, ft3.xxx \n' + 
+//			"mov oc, ft4"; //Set the output color to the value interpolated from the three triangle vertices
 		
 		private var vertexAssembly:AGALMiniAssembler = new AGALMiniAssembler();
 		private var fragmentAssembly:AGALMiniAssembler = new AGALMiniAssembler();
@@ -172,6 +215,7 @@ package lion.engine.renderer
 			
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
 			renderElements.length = 0;
+			// 所有顶点
 			var pool:Vector.<Number> = new Vector.<Number>();
 			var offset:int = 0;
 			
@@ -183,28 +227,53 @@ package lion.engine.renderer
 					var geometry:Geometry = Mesh(o).geometry;
 					var vertices:Vector.<Vector3> = geometry.vertices;
 					var faces:Vector.<Surface> = geometry.faces;
+					var normals:Vector.<Vector3> = geometry.normals;
 					
 					
 					// 将三角形面片转成可渲染的面片数据
 					var t:Vector.<uint> = new Vector.<uint>();
 					for each (var f:Surface in faces) {
-						t.push(f.a + offset);
-						t.push(f.b + offset);
-						t.push(f.c + offset);
+						// 顶点数据
+						var v1:Vector3 = vertices[f.a];
+						var v2:Vector3 = vertices[f.b];
+						var v3:Vector3 = vertices[f.c];
+						var allVertices:Array = [v1, v2, v3];
+						var vertexNormals:Array = f.vertexNormals;
+						var i:int = 0;
+						
+						for each (var v:Vector3 in allVertices) {
+							// 坐标
+							pool.push(v.x);
+							pool.push(v.y);
+							pool.push(v.z);
+							
+							// 颜色
+							pool.push(v.x);
+							pool.push(v.y);
+							pool.push(v.z);
+							
+							// 法线
+							// 如果有顶点法线
+							if (vertexNormals.length == 3) {
+								var vn:Vector3 = vertexNormals[i];
+								pool.push(vn.x);
+								pool.push(vn.y);
+								pool.push(vn.z);
+							} else {
+								pool.push(f.normal.x);
+								pool.push(f.normal.y);
+								pool.push(f.normal.z);
+							}
+							i++;
+						}
+						
+						// 索引数据
+						t.push(offset);
+						t.push(offset + 1);
+						t.push(offset + 2);
+						offset += 3;
 					}
 					
-					// 顶点变换
-					for each (var v:Vector3 in vertices) {
-						pool.push(v.x);
-						pool.push(v.y);
-						pool.push(v.z);
-						
-						pool.push(v.x);
-						pool.push(v.y);
-						pool.push(v.z);
-						
-						offset += 1;
-					}
 					
 					// 基本的渲染面
 					var re:RenderableElement = new RenderableElement();
@@ -218,12 +287,12 @@ package lion.engine.renderer
 			if (pool.length <= 0) return;
 			
 			// 顶点数组
-			const dataPerVertex:int = 6;
+			const dataPerVertex:int = 9;
 			vertexes = context.createVertexBuffer(pool.length/dataPerVertex, dataPerVertex);
 			vertexes.uploadFromVector(pool, 0, pool.length/dataPerVertex);
 			
 			context.setVertexBufferAt(0, vertexes, 0, Context3DVertexBufferFormat.FLOAT_3); // va0 is position
-			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_3); // va1 is color
+			context.setVertexBufferAt(2, vertexes, 6, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
 			
 			
 			var drawCount:int = 0;
@@ -235,26 +304,41 @@ package lion.engine.renderer
 				// 索引数组
 				indexList = context.createIndexBuffer(e.indexList.length);
 				indexList.uploadFromVector(e.indexList, 0, e.indexList.length);
+				
+				// 光源位置
+				context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 20, 20, 1]), 1);
+				// 光源颜色
+				context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 1, Vector.<Number>([1, 1, 1, 1]), 1);
 
-				// 最终矩阵
+				// 模型视图投影矩阵
 				finalTransform.identity();
 				finalTransform.append(e.model.toMatrix3D());
 				finalTransform.append(viewProjectionMatrix.toMatrix3D());
-//				// 视口变换
-//				var w:Number = viewport.width;
-//				var h:Number = viewport.height;
-//				var hw:Number = w / 2;
-//				var hh:Number = h / 2;
-//				var toViewPort:Matrix3D = new Matrix3D(Vector.<Number>([
-//					hw - viewport.x, 0,  0, hw,
-//					0, -(hh - viewport.y), 0, hh,
-//					0, 0,   1, 0,
-//					0, 0,   0, 1
-//				]));
-//				finalTransform.append(toViewPort);
-
-				// 将常量提交给顶点着色器，对应变量为vc0
-				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, finalTransform, true);
+				//				// 视口变换
+				//				var w:Number = viewport.width;
+				//				var h:Number = viewport.height;
+				//				var hw:Number = w / 2;
+				//				var hh:Number = h / 2;
+				//				var toViewPort:Matrix3D = new Matrix3D(Vector.<Number>([
+				//					hw - viewport.x, 0,  0, hw,
+				//					0, -(hh - viewport.y), 0, hh,
+				//					0, 0,   1, 0,
+				//					0, 0,   0, 1
+				//				]));
+				//				finalTransform.append(toViewPort);
+				
+				// 将常量提交给顶点着色器，对应变量为vc2
+				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 2, finalTransform, true);
+				
+				// 模型矩阵
+				finalTransform.identity();
+				finalTransform.append(e.model.toMatrix3D());
+				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 6, finalTransform, true);
+				
+				// 法线矩阵
+				var normalMatrix:Matrix3 = new Matrix3().getNormalMatrix(e.model);
+				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 10, normalMatrix.toMatrix3D(), true);
+				
 				
 				// 绘制三角形
 				context.drawTriangles(indexList, 0, e.triangleCount);

@@ -11,6 +11,7 @@ package lion.examples
 	import lion.engine.core.Scene;
 	import lion.engine.geometries.CubeGeometry;
 	import lion.engine.geometries.PlaneGeometry;
+	import lion.engine.geometries.SphereGeometry;
 	import lion.engine.materials.Material;
 	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.MathUtil;
@@ -30,6 +31,7 @@ package lion.examples
 		private var info:TextField;
 		private var cube:Mesh;
 		private var angle:Number = 0;
+		private var sphere:Mesh;
 		
 		public function Stage3DExample()
 		{
@@ -57,12 +59,20 @@ package lion.examples
 			
 			// 创建一个面片
 			var p2:PlaneGeometry = new PlaneGeometry(10, 10);
-			var m:Material = new WireframeMaterial();
+			var m1:Material = new WireframeMaterial();
 			
-			plane = new Mesh(p2, m);
+			plane = new Mesh(p2, m1);
 			plane.position.set(20, -5, 0);
 			plane.rotation.x = -1.57;
 			scene.add(plane);
+			
+			// 创建一个圆
+			var p3:SphereGeometry = new SphereGeometry(10, 16, 16);
+			var m2:Material = new WireframeMaterial();
+			
+			sphere = new Mesh(p3, m2);
+			sphere.position.set(-20, 0, 0);
+			scene.add(sphere);
 			
 			// 创建一个摄像机
 			camera = new PerspectiveCamera(60, 1);
@@ -92,6 +102,7 @@ package lion.examples
 		protected function update(event:Event):void
 		{
 			cube.rotation.y += 0.01;
+			sphere.rotation.y -= 0.01;
 			//			plane.rotation.x += 0.01;
 			//			camera.rotation.y += 0.01;
 			info.text = MathUtil.toDegrees(camera.rotation.y).toFixed(2);

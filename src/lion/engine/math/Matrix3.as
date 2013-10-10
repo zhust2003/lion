@@ -1,5 +1,7 @@
 package lion.engine.math
 {
+	import flash.geom.Matrix3D;
+
 	/**
 	 * 3x3矩阵，主要给法向量用，因为法向量不需要平移 
 	 * @author Dalton
@@ -116,6 +118,13 @@ package lion.engine.math
 		 */		
 		public function getNormalMatrix(m:Matrix4):Matrix3 {
 			return this.getInverse(m).transpose();
+		}
+		
+		public function toMatrix3D():Matrix3D {
+			return new Matrix3D(Vector.<Number>([elements[0], elements[3], elements[6], 0,
+				elements[1], elements[4], elements[7], 0,
+				elements[2], elements[5], elements[8], 0,
+				0, 0, 0, 1]));
 		}
 	}
 }

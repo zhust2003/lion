@@ -12,11 +12,15 @@ package lion.engine.core
 	{
 		// 颜色
 		private var color:Color;
+		
 		// 法线
 		public var normal:Vector3;
 		
-		// 顶点发现
-		public var vertexNormals:Array
+		// 顶点法线
+		public var vertexNormals:Array;
+		
+		// 顶点颜色
+		public var vertexColors:Array;
 		
 		// 顶点索引
 		public var a:int;
@@ -41,6 +45,7 @@ package lion.engine.core
 			this.normal = normal || new Vector3();
 			this.color = color || new Color();
 			this.centroid = new Vector3();
+			this.vertexNormals = [];
 		}
 	}
 }
