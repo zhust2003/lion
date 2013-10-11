@@ -2,10 +2,13 @@ package lion.examples
 {
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
 	import flash.geom.Rectangle;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
+	import flash.ui.Keyboard;
 	
+	import lion.engine.cameras.OrthographicCamera;
 	import lion.engine.cameras.PerspectiveCamera;
 	import lion.engine.core.Mesh;
 	import lion.engine.core.Scene;
@@ -15,9 +18,13 @@ package lion.examples
 	import lion.engine.materials.Material;
 	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.MathUtil;
+	import lion.engine.math.Matrix3;
 	import lion.engine.math.Vector3;
 	import lion.engine.renderer.SoftRenderer;
 	import lion.engine.renderer.Stage3DRenderer;
+	import lion.engine.utils.InputManager;
+	import lion.games.controls.EditorControl;
+	import lion.games.controls.FirstPersonControl;
 	
 	[SWF(frameRate="60", width="600", height="600", backgroundColor="#0")]
 	public class Stage3DExample extends Sprite
@@ -27,11 +34,17 @@ package lion.examples
 		private var scene:Scene;
 		private var plane:Mesh;
 		private var camera:PerspectiveCamera;
+//		private var camera:OrthographicCamera;
 		private var viewport:Rectangle;
 		private var info:TextField;
 		private var cube:Mesh;
 		private var angle:Number = 0;
 		private var sphere:Mesh;
+		private var startX:Number;
+		private var startY:Number;
+		private var center:Vector3;
+//		private var control:FirstPersonControl;
+		private var control:EditorControl;
 		
 		public function Stage3DExample()
 		{
@@ -58,12 +71,12 @@ package lion.examples
 			scene.add(cube);
 			
 			// 创建一个面片
-			var p2:PlaneGeometry = new PlaneGeometry(10, 10);
+			var p2:CubeGeometry = new CubeGeometry(10, 10, 10);
 			var m1:Material = new WireframeMaterial();
 			
 			plane = new Mesh(p2, m1);
-			plane.position.set(20, -5, 0);
-			plane.rotation.x = -1.57;
+			plane.position.set(0, 20, 0);
+//			plane.rotation.x = -1.57;
 			scene.add(plane);
 			
 			// 创建一个圆
@@ -76,8 +89,10 @@ package lion.examples
 			
 			// 创建一个摄像机
 			camera = new PerspectiveCamera(60, 1);
+//			camera = new OrthographicCamera(-50, 50, 50, -50);
 			camera.position.set(0, 20, 50);
-			camera.lookAt(new Vector3(0, 0, 0));
+			center = new Vector3(0, 0, 0);
+			camera.lookAt(center);
 			scene.add(camera);
 			
 			// 创建一个渲染器
@@ -93,8 +108,14 @@ package lion.examples
 			info.setTextFormat(format);
 			addChild(info);
 			
+			// 摄像机控制器
+//			control = new FirstPersonControl(camera, stage);
+			control = new EditorControl(camera, stage, new Vector3());
+			
+			
 			
 			viewport = new Rectangle(0, 0, stage.stageWidth, stage.stageHeight);
+			InputManager.instance.init(stage);
 			
 			addEventListener(Event.ENTER_FRAME, update);
 		}
@@ -103,9 +124,8 @@ package lion.examples
 		{
 			cube.rotation.y += 0.01;
 			sphere.rotation.y -= 0.01;
-			//			plane.rotation.x += 0.01;
-			//			camera.rotation.y += 0.01;
-			info.text = MathUtil.toDegrees(camera.rotation.y).toFixed(2);
+			info.text = MathUtil.toDegrees(cube.rotation.y).toFixed(2);
+			control.update();
 			renderer.render(scene, camera, viewport);
 		}
 	}

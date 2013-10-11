@@ -35,7 +35,7 @@ package lion.engine.renderer
 	public class Stage3DRenderer implements IRenderer
 	{
 		private var stage:Stage;
-		private var stage3D:Stage3D;
+		public var stage3D:Stage3D;
 		private var context:Context3D;
 		
 		private var indexList:IndexBuffer3D;
@@ -45,6 +45,8 @@ package lion.engine.renderer
 		// Gouraud Shader
 		private const VERTEX_SHADER:String =
 			"m44 op, va0, vc2    \n" +    // 4x4 matrix transform 
+//			'mov vt0, va2 \n' +
+//			'mov v0, va1 \n';
 		
 			// 直线光，flat着色
 			// 光源朝向顶点坐标的向量
@@ -195,6 +197,41 @@ package lion.engine.renderer
 			}
 		}
 		
+		/**
+		 * 物体排序 
+		 * @param a
+		 * @param b
+		 * @return 
+		 * 
+		 */		
+		private function painterSortByObject(a:RenderObject, b:RenderObject):int {
+			if (a.z !== b.z) {
+				return b.z - a.z < 0 ? -1 : 1;
+			} else if (a.id !== b.id) {
+				return a.id - b.id > 0 ? -1 : 1;
+			} else {
+				return 0;
+			}
+		}
+		
+		/**
+		 * 画家排序 
+		 * 由远到近
+		 * @param a
+		 * @param b
+		 * @return 
+		 * 
+		 */		
+		private function painterSort(a:RenderableElement, b:RenderableElement):int {
+			if (a.z !== b.z) {
+				return b.z - a.z < 0 ? -1 : 1;
+			} else if (a.id !== b.id) {
+				return a.id - b.id > 0 ? -1 : 1;
+			} else {
+				return 0;
+			}
+		}
+		
 		public function render(scene:Scene, camera:Camera, viewport:Rectangle):void
 		{
 			// 更新场景所有物件的矩阵
@@ -212,6 +249,7 @@ package lion.engine.renderer
 			renderList.length = 0;
 			lights.length = 0;
 			fillRenderList(scene);
+			renderList.sort(painterSortByObject);
 			
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
 			renderElements.length = 0;
@@ -248,9 +286,9 @@ package lion.engine.renderer
 							pool.push(v.z);
 							
 							// 颜色
-							pool.push(v.x);
-							pool.push(v.y);
-							pool.push(v.z);
+							pool.push(1);
+							pool.push(1);
+							pool.push(1);
 							
 							// 法线
 							// 如果有顶点法线
@@ -276,15 +314,21 @@ package lion.engine.renderer
 					
 					
 					// 基本的渲染面
+					var centroid:Vector3 = new Vector3();
 					var re:RenderableElement = new RenderableElement();
 					re.model = modelMatrix;
 					re.triangleCount = t.length / 3;
 					re.indexList = t;
+					centroid.copy(Mesh(o).position).applyProjection(viewProjectionMatrix);
+					re.z = centroid.z;
 					renderElements.push(re);
 				}
 			}
 			
 			if (pool.length <= 0) return;
+			
+			// 对基本渲染元素进行排序
+			renderElements.sort(painterSort);
 			
 			// 顶点数组
 			const dataPerVertex:int = 9;
@@ -292,6 +336,7 @@ package lion.engine.renderer
 			vertexes.uploadFromVector(pool, 0, pool.length/dataPerVertex);
 			
 			context.setVertexBufferAt(0, vertexes, 0, Context3DVertexBufferFormat.FLOAT_3); // va0 is position
+//			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
 			context.setVertexBufferAt(2, vertexes, 6, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
 			
 			
@@ -306,7 +351,7 @@ package lion.engine.renderer
 				indexList.uploadFromVector(e.indexList, 0, e.indexList.length);
 				
 				// 光源位置
-				context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 20, 20, 1]), 1);
+				context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 30, 20, 1]), 1);
 				// 光源颜色
 				context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 1, Vector.<Number>([1, 1, 1, 1]), 1);
 
