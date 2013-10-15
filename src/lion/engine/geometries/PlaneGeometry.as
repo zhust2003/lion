@@ -1,6 +1,7 @@
 package lion.engine.geometries
 {
 	import lion.engine.core.Surface;
+	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 
 	/**
@@ -59,12 +60,19 @@ package lion.engine.geometries
 					var c:int = ix + 1 + gridX * (iy + 1);
 					var d:int = ix + 1 + gridX * iy;
 					
+					var uva:Vector2 = new Vector2(ix / widthSegments, 1 - iy / heightSegments);
+					var uvb:Vector2 = new Vector2(ix / widthSegments, 1 - (iy + 1) / heightSegments);
+					var uvc:Vector2 = new Vector2((ix + 1) / widthSegments, 1 - (iy + 1) / heightSegments);
+					var uvd:Vector2 = new Vector2((ix + 1) / widthSegments, 1 - iy / heightSegments);
+					
 					// 两个三角面
 					var face:Surface = new Surface(a, b, d, normal);
 					faces.push(face);
+					faceVertexUvs.push([uva, uvb, uvd]);
 					
 					face = new Surface(b, c, d, normal);
 					faces.push(face);
+					faceVertexUvs.push([uvb, uvc, uvd]);
 				}
 			}
 			

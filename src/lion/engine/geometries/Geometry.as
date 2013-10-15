@@ -3,6 +3,7 @@ package lion.engine.geometries
 	import lion.engine.core.Surface;
 	import lion.engine.math.Box;
 	import lion.engine.math.Sphere;
+	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 
 	public class Geometry
@@ -16,6 +17,8 @@ package lion.engine.geometries
 		public var normals:Vector.<Vector3>;
 		// 面
 		public var faces:Vector.<Surface>;
+		// UV坐标
+		public var faceVertexUvs:Array;
 		
 		// 包围球
 		public var boundingSphere:Sphere;
@@ -28,6 +31,7 @@ package lion.engine.geometries
 			name = '';
 			vertices = new Vector.<Vector3>();
 			faces = new Vector.<Surface>();
+			faceVertexUvs = [];
 		}
 		
 		/**

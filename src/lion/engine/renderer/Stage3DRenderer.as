@@ -3,16 +3,19 @@ package lion.engine.renderer
 	import com.adobe.utils.AGALMiniAssembler;
 	import com.adobe.utils.PerspectiveMatrix3D;
 	
+	import flash.display.BitmapData;
 	import flash.display.Stage;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DCompareMode;
 	import flash.display3D.Context3DProgramType;
+	import flash.display3D.Context3DTextureFormat;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
+	import flash.display3D.textures.Texture;
 	import flash.events.ErrorEvent;
 	import flash.events.Event;
 	import flash.geom.Matrix3D;
@@ -29,6 +32,7 @@ package lion.engine.renderer
 	import lion.engine.math.Frustum;
 	import lion.engine.math.Matrix3;
 	import lion.engine.math.Matrix4;
+	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 	import lion.engine.math.Vector4;
 	
@@ -45,8 +49,7 @@ package lion.engine.renderer
 		// Gouraud Shader
 		private const VERTEX_SHADER:String =
 			"m44 op, va0, vc2    \n" +    // 4x4 matrix transform 
-//			'mov vt0, va2 \n' +
-//			'mov v0, va1 \n';
+			'mov v1, va1 \n' +
 		
 			// 直线光，flat着色
 			// 光源朝向顶点坐标的向量
@@ -67,7 +70,9 @@ package lion.engine.renderer
 	
 		
 		private const FRAGMENT_SHADER:String = 
-			"mov oc, v0"; //Set the output color to the value interpolated from the three triangle vertices
+			"tex ft0, v1, fs0 <2d> \n" +
+			'mul ft0, ft0, v0 \n' +	
+			"mov oc, ft0"; //Set the output color to the value interpolated from the three triangle vertices
 		
 		
 		// Phong Shader
@@ -104,6 +109,10 @@ package lion.engine.renderer
 		private var renderList:Vector.<RenderObject>;
 		private var lights:Vector.<Light>;
 		private var renderElements:Vector.<RenderableElement>;
+		
+		[Embed(source="../../../../assets/t.png", mimeType="image/png")]
+		private var t:Class;
+		public var drawCount:int;
 		
 		public function Stage3DRenderer(stage:Stage, renderMode:String="auto", profile:String="baselineConstrained")
 		{
@@ -161,6 +170,12 @@ package lion.engine.renderer
 			// stage3d 顺时针是正面朝向，逆时针是反面朝向，与opengl相反
 			context.setCulling(Context3DTriangleFace.FRONT);
 //			context.setDepthTest(true, Context3DCompareMode.LESS_EQUAL);
+			
+			//设置纹理
+			var b:BitmapData = (new t()).bitmapData;
+			var texture:Texture = context.createTexture(b.width, b.height, Context3DTextureFormat.BGRA, false);
+			texture.uploadFromBitmapData(b);
+			context.setTextureAt(0, texture);
 			
 			programPair = context.createProgram();
 			programPair.upload(vertexAssembly.agalcode, fragmentAssembly.agalcode);
@@ -266,10 +281,11 @@ package lion.engine.renderer
 					var vertices:Vector.<Vector3> = geometry.vertices;
 					var faces:Vector.<Surface> = geometry.faces;
 					var normals:Vector.<Vector3> = geometry.normals;
-					
+					var uvs:Array = geometry.faceVertexUvs;
 					
 					// 将三角形面片转成可渲染的面片数据
 					var t:Vector.<uint> = new Vector.<uint>();
+					var faceIndex:int = 0;
 					for each (var f:Surface in faces) {
 						// 顶点数据
 						var v1:Vector3 = vertices[f.a];
@@ -279,16 +295,17 @@ package lion.engine.renderer
 						var vertexNormals:Array = f.vertexNormals;
 						var i:int = 0;
 						
+						var uv:Array = uvs[faceIndex];
+						
 						for each (var v:Vector3 in allVertices) {
 							// 坐标
 							pool.push(v.x);
 							pool.push(v.y);
 							pool.push(v.z);
 							
-							// 颜色
-							pool.push(1);
-							pool.push(1);
-							pool.push(1);
+							// u,v
+							pool.push(uv[i].x);
+							pool.push(uv[i].y);
 							
 							// 法线
 							// 如果有顶点法线
@@ -310,6 +327,7 @@ package lion.engine.renderer
 						t.push(offset + 1);
 						t.push(offset + 2);
 						offset += 3;
+						faceIndex ++;
 					}
 					
 					
@@ -331,16 +349,16 @@ package lion.engine.renderer
 			renderElements.sort(painterSort);
 			
 			// 顶点数组
-			const dataPerVertex:int = 9;
+			const dataPerVertex:int = 8;
 			vertexes = context.createVertexBuffer(pool.length/dataPerVertex, dataPerVertex);
 			vertexes.uploadFromVector(pool, 0, pool.length/dataPerVertex);
 			
 			context.setVertexBufferAt(0, vertexes, 0, Context3DVertexBufferFormat.FLOAT_3); // va0 is position
-//			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
-			context.setVertexBufferAt(2, vertexes, 6, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
+			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_2); // va2 is uv
+			context.setVertexBufferAt(2, vertexes, 5, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
 			
 			
-			var drawCount:int = 0;
+			drawCount = 0;
 			
 			context.clear(0, 0, 0);
 			

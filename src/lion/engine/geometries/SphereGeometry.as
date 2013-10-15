@@ -1,6 +1,7 @@
 package lion.engine.geometries
 {
 	import lion.engine.core.Surface;
+	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 
 	/**
@@ -35,11 +36,12 @@ package lion.engine.geometries
 			this.thetaStart = thetaStart;
 			this.thetaLength = thetaLength;
 			
-			var x:int, y:int, indices:Array = [];
+			var x:int, y:int, indices:Array = [], uvs:Array = [];
 			
 			// 增加顶点
 			for (y = 0; y <= heightSegments; y++) {
 				var indicesRow:Array = [];
+				var uvsRow:Array = [];
 				
 				for (x = 0; x <= widthSegments; x++) {
 					var u:Number = x / widthSegments;
@@ -51,9 +53,11 @@ package lion.engine.geometries
 					
 					vertices.push(vertex);
 					indicesRow.push(this.vertices.length - 1);
+					uvsRow.push( new Vector2(u, 1 - v));
 				}
 				
 				indices.push(indicesRow);
+				uvs.push(uvsRow);
 			}
 			
 			
@@ -72,6 +76,11 @@ package lion.engine.geometries
 					var n3:Vector3 = this.vertices[v3].clone().normalize();
 					var n4:Vector3 = this.vertices[v4].clone().normalize();
 					
+					var uv1:Vector2 = uvs[y][x + 1].clone();
+					var uv2:Vector2 = uvs[y][x].clone();
+					var uv3:Vector2 = uvs[y + 1][x].clone();
+					var uv4:Vector2 = uvs[y + 1][x + 1].clone();
+					
 					var f:Surface;
 					
 					// 顶部跟底部是三角形
@@ -81,6 +90,7 @@ package lion.engine.geometries
 						f.vertexNormals = [n1, n3, n4];
 						f.normal = new Vector3().add(n1).add(n3).add(n4).divide(3);
 						this.faces.push(f);
+						this.faceVertexUvs.push([uv1, uv3, uv4]);
 						
 					} else if (Math.abs(this.vertices[v3].y) === this.radius) {
 						
@@ -88,6 +98,7 @@ package lion.engine.geometries
 						f.vertexNormals = [n1, n2, n3];
 						f.normal = new Vector3().add(n1).add(n2).add(n3).divide(3);
 						this.faces.push(f);
+						this.faceVertexUvs.push([uv1, uv2, uv3]);
 						
 					} else {
 						
@@ -96,11 +107,13 @@ package lion.engine.geometries
 						f.vertexNormals = [n1, n2, n4];
 						f.normal = new Vector3().add(n1).add(n2).add(n3).divide(3);
 						this.faces.push(f);
+						this.faceVertexUvs.push([uv1, uv2, uv4]);
 						
 						f = new Surface(v2, v3, v4);
 						f.vertexNormals = [n2, n3, n4];
 						f.normal = new Vector3().add(n2).add(n3).add(n4).divide(3);
 						this.faces.push(f);
+						this.faceVertexUvs.push([uv2, uv3, uv4]);
 						
 					}
 				}

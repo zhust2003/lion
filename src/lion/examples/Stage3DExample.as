@@ -7,6 +7,7 @@ package lion.examples
 	import flash.text.TextField;
 	import flash.text.TextFormat;
 	import flash.ui.Keyboard;
+	import flash.utils.ByteArray;
 	
 	import lion.engine.cameras.OrthographicCamera;
 	import lion.engine.cameras.PerspectiveCamera;
@@ -46,6 +47,10 @@ package lion.examples
 //		private var control:FirstPersonControl;
 		private var control:EditorControl;
 		
+		[Embed(source="../../test", mimeType="application/octet-stream")]
+		private var c:Class;
+		private var cube2:Mesh;
+		
 		public function Stage3DExample()
 		{
 			addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
@@ -74,9 +79,17 @@ package lion.examples
 			var p2:CubeGeometry = new CubeGeometry(10, 10, 10);
 			var m1:Material = new WireframeMaterial();
 			
-			plane = new Mesh(p2, m1);
-			plane.position.set(0, 20, 0);
-//			plane.rotation.x = -1.57;
+			cube2 = new Mesh(p2, m1);
+			cube2.position.set(0, 20, 0);
+			scene.add(cube2);
+			
+			// 创建一个面片
+			var p4:PlaneGeometry = new PlaneGeometry(10, 10);
+			var m3:Material = new WireframeMaterial();
+			
+			plane = new Mesh(p4, m3);
+			plane.position.set(20, 0, 0);
+			plane.rotation.x = -1.57;
 			scene.add(plane);
 			
 			// 创建一个圆
@@ -124,7 +137,8 @@ package lion.examples
 		{
 			cube.rotation.y += 0.01;
 			sphere.rotation.y -= 0.01;
-			info.text = MathUtil.toDegrees(cube.rotation.y).toFixed(2);
+			plane.rotation.x += 0.01;
+			info.text = 'draw count:' + renderer.drawCount.toString();
 			control.update();
 			renderer.render(scene, camera, viewport);
 		}
