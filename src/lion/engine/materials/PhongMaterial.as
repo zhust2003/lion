@@ -13,6 +13,8 @@ package lion.engine.materials
 		// 自发光
 		private var emission:Color;
 		
+		private var shininess:Number;
+		
 		public function PhongMaterial()
 		{
 			super();
