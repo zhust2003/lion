@@ -1,6 +1,8 @@
 package lion.examples
 {
+	import flash.display.BitmapData;
 	import flash.display.Sprite;
+	import flash.display3D.Context3DTriangleFace;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Rectangle;
@@ -16,6 +18,8 @@ package lion.examples
 	import lion.engine.geometries.CubeGeometry;
 	import lion.engine.geometries.PlaneGeometry;
 	import lion.engine.geometries.SphereGeometry;
+	import lion.engine.materials.BaseMaterial;
+	import lion.engine.materials.LambertMaterial;
 	import lion.engine.materials.Material;
 	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.MathUtil;
@@ -23,6 +27,7 @@ package lion.examples
 	import lion.engine.math.Vector3;
 	import lion.engine.renderer.SoftRenderer;
 	import lion.engine.renderer.Stage3DRenderer;
+	import lion.engine.textures.BitmapTexture;
 	import lion.engine.utils.InputManager;
 	import lion.games.controls.EditorControl;
 	import lion.games.controls.FirstPersonControl;
@@ -49,6 +54,10 @@ package lion.examples
 		
 		[Embed(source="../../test", mimeType="application/octet-stream")]
 		private var c:Class;
+		[Embed(source="../../../assets/t.png", mimeType="image/png")]
+		private var t:Class;
+		[Embed(source="../../../assets/earth.jpg", mimeType="image/jpeg")]
+		private var e:Class;
 		private var cube2:Mesh;
 		
 		public function Stage3DExample()
@@ -69,7 +78,9 @@ package lion.examples
 			
 			// 创建一个立方体
 			var p:CubeGeometry = new CubeGeometry(10, 10, 10);
-			var m:Material = new WireframeMaterial();
+			var b:BitmapData = (new t()).bitmapData;
+			var m:LambertMaterial = new LambertMaterial();
+			m.texture = new BitmapTexture(b, false);
 			
 			cube = new Mesh(p, m);
 			cube.position.set(0, 0, 0);
@@ -77,7 +88,8 @@ package lion.examples
 			
 			// 创建一个面片
 			var p2:CubeGeometry = new CubeGeometry(10, 10, 10);
-			var m1:Material = new WireframeMaterial();
+			var m1:LambertMaterial = new LambertMaterial();
+			m1.texture = new BitmapTexture(b);
 			
 			cube2 = new Mesh(p2, m1);
 			cube2.position.set(0, 20, 0);
@@ -85,7 +97,9 @@ package lion.examples
 			
 			// 创建一个面片
 			var p4:PlaneGeometry = new PlaneGeometry(10, 10);
-			var m3:Material = new WireframeMaterial();
+			var m3:LambertMaterial = new LambertMaterial();
+			m3.texture = new BitmapTexture(b);
+			m3.side = Context3DTriangleFace.NONE;
 			
 			plane = new Mesh(p4, m3);
 			plane.position.set(20, 0, 0);
@@ -94,7 +108,9 @@ package lion.examples
 			
 			// 创建一个圆
 			var p3:SphereGeometry = new SphereGeometry(10, 16, 16);
-			var m2:Material = new WireframeMaterial();
+			var eb:BitmapData = (new e()).bitmapData;
+			var m2:LambertMaterial = new LambertMaterial();
+			m2.texture = new BitmapTexture(eb);
 			
 			sphere = new Mesh(p3, m2);
 			sphere.position.set(-20, 0, 0);

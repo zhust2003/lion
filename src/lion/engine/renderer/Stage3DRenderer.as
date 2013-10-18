@@ -16,6 +16,7 @@ package lion.engine.renderer
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.display3D.textures.Texture;
+	import flash.display3D.textures.TextureBase;
 	import flash.events.ErrorEvent;
 	import flash.events.Event;
 	import flash.geom.Matrix3D;
@@ -46,63 +47,6 @@ package lion.engine.renderer
 		private var vertexes:VertexBuffer3D;
 		private var finalTransform:Matrix3D = new Matrix3D();
 		
-		// Gouraud Shader
-		private const VERTEX_SHADER:String =
-			"m44 op, va0, vc2    \n" +    // 4x4 matrix transform 
-			'mov v1, va1 \n' +
-		
-			// 直线光，flat着色
-			// 光源朝向顶点坐标的向量
-			'm44 vt0, va0, vc6 \n' +
-			'sub vt1, vc0, vt0 \n' + 
-			'nrm vt1.xyz, vt1.xyz \n' +
-			
-			// 法线变换并归一化
-			'm33 vt2.xyz, va2.xyz, vc10 \n' +
-			'nrm vt2.xyz, vt2.xyz \n' +
-			
-			// 点积 CosA = L . Normal
-			'dp3 vt3.x, vt1.xyz, vt2.xyz \n' +	
-			'sat vt3.x, vt3.x \n' +
-			'mul vt4.rgb, vc1.rgb, vt3.xxx \n' + 
-			'mov v0, vt4.rgb \n';
-		
-	
-		
-		private const FRAGMENT_SHADER:String = 
-			"tex ft0, v1, fs0 <2d> \n" +
-			'mul ft0, ft0, v0 \n' +	
-			"mov oc, ft0"; //Set the output color to the value interpolated from the three triangle vertices
-		
-		
-		// Phong Shader
-//		private const VERTEX_SHADER:String =
-//			"m44 op, va0, vc2    \n" +    // 4x4 matrix transform 
-//			'mov v0, va0 \n' +
-//			
-//			// 法线变换并归一化
-//			'm33 vt2.xyz, va2.xyz, vc10 \n' +
-//			'nrm vt2.xyz, vt2.xyz \n' +
-//			'mov v2, vt2.xyz \n' +
-//			
-//			'mov v1, va2';
-//		
-//		private const FRAGMENT_SHADER:String = 
-//			// 直线光，flat着色
-//			// 光源朝向顶点坐标的向量
-//			'm44 ft0, v0, fc6 \n' +
-//			'sub ft1, fc0, ft0 \n' + 
-//			'nrm ft1.xyz, ft1.xyz \n' +
-//			
-//			'dp3 ft3.x, ft1.xyz, v2.xyz \n' +	
-//			'sat ft3.x, ft3.x \n' +
-//			'mul ft4.rgb, fc1.rgb, ft3.xxx \n' + 
-//			"mov oc, ft4"; //Set the output color to the value interpolated from the three triangle vertices
-		
-		private var vertexAssembly:AGALMiniAssembler = new AGALMiniAssembler();
-		private var fragmentAssembly:AGALMiniAssembler = new AGALMiniAssembler();
-		private var programPair:Program3D;
-		
 		private var viewMatrix:Matrix4;
 		private var viewProjectionMatrix:Matrix4;
 		private var frustum:Frustum;
@@ -113,6 +57,8 @@ package lion.engine.renderer
 		[Embed(source="../../../../assets/t.png", mimeType="image/png")]
 		private var t:Class;
 		public var drawCount:int;
+		private var currentProgram3D:Program3D;
+		private var currentSide:String;
 		
 		public function Stage3DRenderer(stage:Stage, renderMode:String="auto", profile:String="baselineConstrained")
 		{
@@ -127,12 +73,6 @@ package lion.engine.renderer
 				var requestContext3D:Function = stage3D.requestContext3D;
 				if (requestContext3D.length == 1) requestContext3D(renderMode);
 				else requestContext3D(renderMode, profile);
-				
-				
-				// Compile shaders
-				// 两个可编程管线，顶点着色器跟像素着色器
-				vertexAssembly.assemble(Context3DProgramType.VERTEX, VERTEX_SHADER, false);
-				fragmentAssembly.assemble(Context3DProgramType.FRAGMENT, FRAGMENT_SHADER, false);  
 			}
 			
 			renderList = new Vector.<RenderObject>();
@@ -168,18 +108,14 @@ package lion.engine.renderer
 			context.enableErrorChecking = true; //Can slow rendering - only turn on when developing/testing
 			context.configureBackBuffer(stage.stageWidth, stage.stageHeight, 2, false);
 			// stage3d 顺时针是正面朝向，逆时针是反面朝向，与opengl相反
-			context.setCulling(Context3DTriangleFace.FRONT);
+//			context.setCulling(Context3DTriangleFace.FRONT);
 //			context.setDepthTest(true, Context3DCompareMode.LESS_EQUAL);
 			
-			//设置纹理
-			var b:BitmapData = (new t()).bitmapData;
-			var texture:Texture = context.createTexture(b.width, b.height, Context3DTextureFormat.BGRA, false);
-			texture.uploadFromBitmapData(b);
-			context.setTextureAt(0, texture);
-			
-			programPair = context.createProgram();
-			programPair.upload(vertexAssembly.agalcode, fragmentAssembly.agalcode);
-			context.setProgram(programPair);
+			// 设置纹理
+//			var b:BitmapData = (new t()).bitmapData;
+//			var texture:Texture = context.createTexture(b.width, b.height, Context3DTextureFormat.BGRA, false);
+//			texture.uploadFromBitmapData(b);
+//			context.setTextureAt(0, texture);
 		}
 		
 		
@@ -332,6 +268,7 @@ package lion.engine.renderer
 					
 					
 					// 基本的渲染面
+					// 一整个物体，一个渲染元素
 					var centroid:Vector3 = new Vector3();
 					var re:RenderableElement = new RenderableElement();
 					re.model = modelMatrix;
@@ -339,6 +276,7 @@ package lion.engine.renderer
 					re.indexList = t;
 					centroid.copy(Mesh(o).position).applyProjection(viewProjectionMatrix);
 					re.z = centroid.z;
+					re.object = r.object;
 					renderElements.push(re);
 				}
 			}
@@ -354,7 +292,7 @@ package lion.engine.renderer
 			vertexes.uploadFromVector(pool, 0, pool.length/dataPerVertex);
 			
 			context.setVertexBufferAt(0, vertexes, 0, Context3DVertexBufferFormat.FLOAT_3); // va0 is position
-			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_2); // va2 is uv
+			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_2); // va1 is uv
 			context.setVertexBufferAt(2, vertexes, 5, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
 			
 			
@@ -364,31 +302,17 @@ package lion.engine.renderer
 			
 			// 光栅化，将所有的基本渲染元素光栅化到窗口
 			for each (var e:RenderableElement in renderElements) {
+				// 设置渲染程序（顶点，片段）
+				setProgram(e.object as Mesh);
+				
 				// 索引数组
 				indexList = context.createIndexBuffer(e.indexList.length);
 				indexList.uploadFromVector(e.indexList, 0, e.indexList.length);
-				
-				// 光源位置
-				context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 30, 20, 1]), 1);
-				// 光源颜色
-				context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 1, Vector.<Number>([1, 1, 1, 1]), 1);
 
 				// 模型视图投影矩阵
 				finalTransform.identity();
 				finalTransform.append(e.model.toMatrix3D());
 				finalTransform.append(viewProjectionMatrix.toMatrix3D());
-				//				// 视口变换
-				//				var w:Number = viewport.width;
-				//				var h:Number = viewport.height;
-				//				var hw:Number = w / 2;
-				//				var hh:Number = h / 2;
-				//				var toViewPort:Matrix3D = new Matrix3D(Vector.<Number>([
-				//					hw - viewport.x, 0,  0, hw,
-				//					0, -(hh - viewport.y), 0, hh,
-				//					0, 0,   1, 0,
-				//					0, 0,   0, 1
-				//				]));
-				//				finalTransform.append(toViewPort);
 				
 				// 将常量提交给顶点着色器，对应变量为vc2
 				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 2, finalTransform, true);
@@ -415,6 +339,55 @@ package lion.engine.renderer
 			// 呈现
 			context.present();
 		}
+		
+		private function setProgram(object:Mesh):void
+		{
+			// 如果材质对应的着色器对还没初始化
+			if (object.material.dirty) {
+				object.material.program = initProgram(object.material.vshader, object.material.fshader);
+				object.material.dirty = false;
+			}
+			// 设置着色器对
+			var program:Program3D = object.material.program;
+			if (program != currentProgram3D) {
+				context.setProgram(program);
+				currentProgram3D = program;
+			}
+			// 初始化材质需要提交给GPU的东西，
+			// 比如纹理需要绑定等等
+			if (object.material.texture) {
+				var t:TextureBase = object.material.texture.getTexture(context);
+				context.setTextureAt(0, t);
+			} else {
+				context.setTextureAt(0, null);
+			}
+			
+			// 剔除面
+			if (object.material.side != currentSide) {
+				context.setCulling(object.material.side);
+				currentSide = object.material.side;
+			}
+			
+			// 计算所有的光照，提交到着色器
+			// 临时光源
+			// 光源位置
+			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 30, 20, 1]), 1);
+			// 光源颜色
+			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 1, Vector.<Number>([1, 1, 1, 1]), 1);
+		}
+		
+		/**
+		 * 初始化着色器对 
+		 * @param vertexAssembly
+		 * @param fragmentAssembly
+		 * 
+		 */		
+		private function initProgram(vertexAssembly:AGALMiniAssembler, fragmentAssembly:AGALMiniAssembler):Program3D {
+			var program:Program3D = context.createProgram();
+			program.upload(vertexAssembly.agalcode, fragmentAssembly.agalcode);
+			
+			return program;
+		}
 	}
 }
 
@@ -440,6 +413,7 @@ class RenderableElement {
 	public var model:Matrix4;
 	public var indexList:Vector.<uint>;
 	public var triangleCount:uint;
+	public var object:Object3D;
 	public function render(context:Graphics):void {
 		
 	}

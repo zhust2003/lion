@@ -14,7 +14,7 @@ package lion.engine.renderer
 	import lion.engine.lights.Light;
 	import lion.engine.lights.PointLight;
 	import lion.engine.lights.SpotLight;
-	import lion.engine.materials.BaseMaterial;
+	import lion.engine.materials.LambertMaterial;
 	import lion.engine.math.Color;
 	import lion.engine.math.Frustum;
 	import lion.engine.math.Matrix3;
@@ -163,14 +163,14 @@ package lion.engine.renderer
 				if (e is RenderableFace) {
 					var color:Color = new Color();
 					calculateLight(RenderableFace(e).centroid, RenderableFace(e).normal, color);
-					if (RenderableFace(e).material is BaseMaterial) {
+					if (RenderableFace(e).material is LambertMaterial) {
 						context.beginFill(color.toRGB());
 //						context.lineStyle(1, 0xFFFFFF);
 					} else {
 						context.lineStyle(1, 0xFFFFFF);
 					}
 					e.render(context);
-					if (RenderableFace(e).material is BaseMaterial) {
+					if (RenderableFace(e).material is LambertMaterial) {
 						context.endFill();
 					}
 				}

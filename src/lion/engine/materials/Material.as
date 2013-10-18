@@ -1,5 +1,12 @@
 package lion.engine.materials
 {
+	import com.adobe.utils.AGALMiniAssembler;
+	
+	import flash.display3D.Context3DTriangleFace;
+	import flash.display3D.Program3D;
+	
+	import lion.engine.textures.BitmapTexture;
+
 	/**
 	 * 材质 
 	 * @author Dalton
@@ -10,11 +17,24 @@ package lion.engine.materials
 		public static var materialIDCount:uint = 0;
 		public var id:uint;
 		public var name:String;
+		// 剔除面
+		public var side:String;
+		
+		// 着色器相关
+		public var program:Program3D;
+		public var dirty:Boolean = true;
+		
+		public var vshader:AGALMiniAssembler;
+		public var fshader:AGALMiniAssembler;
+		
+		// 使用的纹理
+		public var texture:BitmapTexture;
 		
 		public function Material()
 		{
 			id = materialIDCount++;
 			name = '';
+			side = Context3DTriangleFace.FRONT;
 		}
 	}
 }
