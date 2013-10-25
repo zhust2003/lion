@@ -8,18 +8,18 @@ package lion.engine.shaders
 	public class ShaderRegisterElement
 	{
 		private var _regName:String;
-		private var _index:int;
+		public var index:int;
 		private var _toStr:String;
 		
 		public function ShaderRegisterElement(regName:String, index:int = -1)
 		{
 			_regName = regName;
-			_index = index;
+			this.index = index;
 			
 			_toStr = _regName;
 			
-			if (_index >= 0)
-				_toStr += _index;
+			if (index >= 0)
+				_toStr += index;
 		}
 		
 		/**

@@ -338,6 +338,12 @@ package lion.engine.renderer
 			
 			// 呈现
 			context.present();
+			
+			// 重新清理绑定纹理及顶点缓存
+			for (var ia:uint = 0; ia < 8; ++ia) {
+				context.setVertexBufferAt(ia, null);
+				context.setTextureAt(ia, null);
+			}
 		}
 		
 		private function setProgram(object:Mesh):void
@@ -358,8 +364,6 @@ package lion.engine.renderer
 			if (object.material.texture) {
 				var t:TextureBase = object.material.texture.getTexture(context);
 				context.setTextureAt(0, t);
-			} else {
-				context.setTextureAt(0, null);
 			}
 			
 			// 剔除面
