@@ -17,6 +17,8 @@ package lion.engine.shaders
 		
 		public var fragmentOutputRegister:ShaderRegisterElement;
 		private var _vertexOutputRegister:ShaderRegisterElement;
+		public var numUsedFragmentConstants:int;
+		public var numUsedVertexConstants:int;
 		
 		public function ShaderRegisterCache()
 		{
@@ -99,6 +101,7 @@ package lion.engine.shaders
 		 */		
 		public function getFreeFragmentConstant():ShaderRegisterElement
 		{
+			++numUsedFragmentConstants;
 			return _fragmentConstantsCache.requestFreeVectorReg();
 		}
 		
@@ -109,6 +112,7 @@ package lion.engine.shaders
 		 */	
 		public function getFreeVertexConstant():ShaderRegisterElement
 		{
+			++numUsedVertexConstants;
 			return _vertexConstantsCache.requestFreeVectorReg();
 		}
 		

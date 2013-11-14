@@ -19,8 +19,8 @@ package lion.examples
 	import lion.engine.geometries.PlaneGeometry;
 	import lion.engine.geometries.SphereGeometry;
 	import lion.engine.materials.BaseMaterial;
-	import lion.engine.materials.LambertMaterial;
 	import lion.engine.materials.Material;
+	import lion.engine.materials.VertexLitMaterial;
 	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.MathUtil;
 	import lion.engine.math.Matrix3;
@@ -68,7 +68,7 @@ package lion.examples
 		protected function onAddToStage(event:Event):void
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, onAddToStage);
-			
+
 			init();
 		}
 		
@@ -79,7 +79,7 @@ package lion.examples
 			// 创建一个立方体
 			var p:CubeGeometry = new CubeGeometry(10, 10, 10);
 			var b:BitmapData = (new t()).bitmapData;
-			var m:LambertMaterial = new LambertMaterial();
+			var m:VertexLitMaterial = new VertexLitMaterial();
 			m.texture = new BitmapTexture(b, false);
 			
 			cube = new Mesh(p, m);
@@ -88,7 +88,7 @@ package lion.examples
 			
 			// 创建一个面片
 			var p2:CubeGeometry = new CubeGeometry(10, 10, 10);
-			var m1:LambertMaterial = new LambertMaterial();
+			var m1:VertexLitMaterial = new VertexLitMaterial();
 			m1.texture = new BitmapTexture(b);
 			
 			cube2 = new Mesh(p2, m1);
@@ -97,7 +97,7 @@ package lion.examples
 			
 			// 创建一个面片
 			var p4:PlaneGeometry = new PlaneGeometry(10, 10);
-			var m3:LambertMaterial = new LambertMaterial();
+			var m3:VertexLitMaterial = new VertexLitMaterial();
 			m3.texture = new BitmapTexture(b);
 			m3.side = Context3DTriangleFace.NONE;
 			
@@ -109,7 +109,7 @@ package lion.examples
 			// 创建一个圆
 			var p3:SphereGeometry = new SphereGeometry(10, 16, 16);
 			var eb:BitmapData = (new e()).bitmapData;
-			var m2:LambertMaterial = new LambertMaterial();
+			var m2:VertexLitMaterial = new VertexLitMaterial();
 			m2.texture = new BitmapTexture(eb);
 			
 			sphere = new Mesh(p3, m2);

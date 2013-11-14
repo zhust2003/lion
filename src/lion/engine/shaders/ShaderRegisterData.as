@@ -15,7 +15,7 @@ package lion.engine.shaders
 		// 法线寄存器，一般是va1
 		public var normalInput:ShaderRegisterElement;
 		// 法线变换后的临时变量，此时已经是世界坐标
-		public var normalVarying:String;
+		public var normalVarying:ShaderRegisterElement;
 		// 目标颜色
 		public var targetLightColor:ShaderRegisterElement;
 		// 视线向量

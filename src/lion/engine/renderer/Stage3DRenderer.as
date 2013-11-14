@@ -374,6 +374,7 @@ package lion.engine.renderer
 			
 			// 计算所有的光照
 			// 提交到着色器
+			
 			// 临时光源
 			// 光源位置
 			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 30, 20, 1]), 1);

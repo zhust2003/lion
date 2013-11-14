@@ -16,7 +16,7 @@ package lion.examples
 	import lion.engine.geometries.SphereGeometry;
 	import lion.engine.lights.DirectionalLight;
 	import lion.engine.lights.PointLight;
-	import lion.engine.materials.LambertMaterial;
+	import lion.engine.materials.VertexLitMaterial;
 	import lion.engine.materials.Material;
 	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.Vector3;
@@ -52,7 +52,7 @@ package lion.examples
 			
 			// 创建一个面片
 			var p:CubeGeometry = new CubeGeometry(10, 10, 10);
-			var m:Material = new LambertMaterial();
+			var m:Material = new VertexLitMaterial();
 			
 			cube = new Mesh(p, m);
 			cube.rotation.y = 14.1;
@@ -60,7 +60,7 @@ package lion.examples
 			scene.add(cube);
 			
 			var p2:PlaneGeometry = new PlaneGeometry(50, 50, 5, 5);
-			var m2:Material = new LambertMaterial();
+			var m2:Material = new VertexLitMaterial();
 			plane = new Mesh(p2, m2);
 			plane.rotation.x = -1.57;
 			plane.position.z = -10;
@@ -69,7 +69,7 @@ package lion.examples
 			
 			// 创建一个球
 			var p3:SphereGeometry = new SphereGeometry(10, 16, 16);
-			var m3:Material = new LambertMaterial();
+			var m3:Material = new VertexLitMaterial();
 			sphere = new Mesh(p3, m3);
 			sphere.position.x = 30;
 			sphere.position.z = -100;
