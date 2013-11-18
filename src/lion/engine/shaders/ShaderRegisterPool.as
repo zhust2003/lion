@@ -51,6 +51,12 @@ package lion.engine.shaders
 			return false;
 		}
 		
+		public function removeUsage(register:ShaderRegisterElement):void
+		{
+			if (--_usedVectorCount[register.index] < 0)
+				throw new Error("More usages removed than exist!");
+		}
+		
 		private static function _initPool(regName:String, regCount:int):String
 		{
 			var hash:String = regName + regCount;

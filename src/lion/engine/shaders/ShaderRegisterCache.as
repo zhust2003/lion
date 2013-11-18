@@ -74,6 +74,11 @@ package lion.engine.shaders
 			return _vertexTempCache.requestFreeVectorReg();
 		}
 		
+		public function removeVertexTempUsage(register:ShaderRegisterElement):void
+		{
+			_vertexTempCache.removeUsage(register);
+		}
+		
 		/**
 		 * 获取临时的片段寄存器 
 		 * @return 
@@ -82,6 +87,11 @@ package lion.engine.shaders
 		public function getFreeFragmentVectorTemp():ShaderRegisterElement
 		{
 			return _fragmentTempCache.requestFreeVectorReg();
+		}
+		
+		public function removeFragmentTempUsage(register:ShaderRegisterElement):void
+		{
+			_fragmentTempCache.removeUsage(register);
 		}
 		
 		/**

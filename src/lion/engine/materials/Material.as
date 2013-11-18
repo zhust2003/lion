@@ -46,5 +46,17 @@ package lion.engine.materials
 			name = '';
 			side = Context3DTriangleFace.FRONT;
 		}
+		
+		public function activate():void {
+		
+		}
+		
+		public function update(s:MaterialUpdateState):void {
+		
+		}
+		
+		public function deactivate():void {
+		
+		}
 	}
 }

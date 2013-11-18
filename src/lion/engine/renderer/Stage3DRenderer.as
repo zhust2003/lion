@@ -29,7 +29,10 @@ package lion.engine.renderer
 	import lion.engine.core.Scene;
 	import lion.engine.core.Surface;
 	import lion.engine.geometries.Geometry;
+	import lion.engine.lights.DirectionalLight;
 	import lion.engine.lights.Light;
+	import lion.engine.lights.PointLight;
+	import lion.engine.materials.MaterialUpdateState;
 	import lion.engine.math.Frustum;
 	import lion.engine.math.Matrix3;
 	import lion.engine.math.Matrix4;
@@ -60,6 +63,8 @@ package lion.engine.renderer
 		private var currentProgram3D:Program3D;
 		private var currentSide:String;
 		
+		private var s:MaterialUpdateState;
+		
 		public function Stage3DRenderer(stage:Stage, renderMode:String="auto", profile:String="baselineConstrained")
 		{
 			this.stage = stage;
@@ -81,6 +86,7 @@ package lion.engine.renderer
 			viewProjectionMatrix = new Matrix4();
 			lights = new Vector.<Light>;
 			frustum = new Frustum();
+			s = new MaterialUpdateState();
 		}
 		
 		protected function onError(event:ErrorEvent):void
@@ -116,6 +122,7 @@ package lion.engine.renderer
 //			var texture:Texture = context.createTexture(b.width, b.height, Context3DTextureFormat.BGRA, false);
 //			texture.uploadFromBitmapData(b);
 //			context.setTextureAt(0, texture);
+			s.context = context;
 		}
 		
 		
@@ -141,6 +148,12 @@ package lion.engine.renderer
 				}
 			}
 			if (o is Light) {
+				if (o is PointLight) {
+					s.numPointLights++;
+				}
+				if (o is DirectionalLight) {
+					s.numDirectionalLights++;
+				}
 				lights.push(o);
 			}
 			for each (var c:Object3D in o.children) {
@@ -199,7 +212,9 @@ package lion.engine.renderer
 			// 获取场景类所有的需要渲染物件
 			renderList.length = 0;
 			lights.length = 0;
+			s.reset();
 			fillRenderList(scene);
+			s.lights = lights;
 			renderList.sort(painterSortByObject);
 			
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
@@ -292,48 +307,58 @@ package lion.engine.renderer
 			vertexes.uploadFromVector(pool, 0, pool.length/dataPerVertex);
 			
 			context.setVertexBufferAt(0, vertexes, 0, Context3DVertexBufferFormat.FLOAT_3); // va0 is position
-			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_2); // va1 is uv
+//			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_2); // va1 is uv
 			context.setVertexBufferAt(2, vertexes, 5, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
 			
 			
 			drawCount = 0;
 			
-			context.clear(0, 0, 0);
+			context.clear(0.19, 0.30, 0.47);
 			
 			// 光栅化，将所有的基本渲染元素光栅化到窗口
 			for each (var e:RenderableElement in renderElements) {
-				// 设置渲染程序（顶点，片段）
-				setProgram(e.object as Mesh);
-				
 				// 索引数组
 				indexList = context.createIndexBuffer(e.indexList.length);
 				indexList.uploadFromVector(e.indexList, 0, e.indexList.length);
 
 				// 模型视图投影矩阵
-				finalTransform.identity();
-				finalTransform.append(e.model.toMatrix3D());
-				finalTransform.append(viewProjectionMatrix.toMatrix3D());
-				
-				// 将常量提交给顶点着色器，对应变量为vc2
-				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 2, finalTransform, true);
+//				finalTransform.identity();
+//				finalTransform.append(e.model.toMatrix3D());
+//				finalTransform.append(viewProjectionMatrix.toMatrix3D());
 				
 				// 模型矩阵
-				finalTransform.identity();
-				finalTransform.append(e.model.toMatrix3D());
-				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 6, finalTransform, true);
+				s.matrix = e.model.toMatrix3D();
+				
+				// 将常量提交给顶点着色器，对应变量为vc2
+//				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 2, finalTransform, true);
+				
+//				finalTransform.identity();
+//				finalTransform.append(e.model.toMatrix3D());
+//				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 6, finalTransform, true);
+				
+				// 投影矩阵
+				s.viewProjectionMatrix = viewProjectionMatrix.toMatrix3D();
 				
 				// 法线矩阵
 				var normalMatrix:Matrix3 = new Matrix3().getNormalMatrix(e.model);
-				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 10, normalMatrix.toMatrix3D(), true);
+				s.normalMatrix = normalMatrix.toMatrix3D();
+//				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 10, normalMatrix.toMatrix3D(), true);
+				
+				s.cameraPosition = camera.position;
+				
+				// 设置渲染程序（顶点，片段）
+				updateMaterial(e.object as Mesh);
 				
 				
 				// 绘制三角形
 				context.drawTriangles(indexList, 0, e.triangleCount);
 				drawCount++;
 				
+				// 清理索引数据
 				indexList.dispose();
 			}
 			
+			// 清理顶点数据
 			vertexes.dispose();
 			
 			// 呈现
@@ -346,25 +371,28 @@ package lion.engine.renderer
 			}
 		}
 		
-		private function setProgram(object:Mesh):void
+		private function updateMaterial(object:Mesh):void
 		{
-			// 如果材质对应的着色器对还没初始化
-			if (object.material.dirty) {
-				object.material.program = initProgram(object.material.vshader, object.material.fshader);
-				object.material.dirty = false;
-			}
-			// 设置着色器对
-			var program:Program3D = object.material.program;
-			if (program != currentProgram3D) {
-				context.setProgram(program);
-				currentProgram3D = program;
-			}
+//			// 如果材质对应的着色器对还没初始化
+//			if (object.material.dirty) {
+//				object.material.program = initProgram(object.material.vshader, object.material.fshader);
+//				object.material.dirty = false;
+//			}
+//			// 设置着色器对
+//			var program:Program3D = object.material.program;
+//			if (program != currentProgram3D) {
+//				context.setProgram(program);
+//				currentProgram3D = program;
+//			}
+			
+			object.material.update(s);
+			
 			// 初始化材质需要提交给GPU的东西，
 			// 比如纹理需要绑定等等
-			if (object.material.texture) {
-				var t:TextureBase = object.material.texture.getTexture(context);
-				context.setTextureAt(0, t);
-			}
+//			if (object.material.texture) {
+//				var t:TextureBase = object.material.texture.getTexture(context);
+//				context.setTextureAt(0, t);
+//			}
 			
 			// 剔除面
 			if (object.material.side != currentSide) {
@@ -377,9 +405,9 @@ package lion.engine.renderer
 			
 			// 临时光源
 			// 光源位置
-			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 30, 20, 1]), 1);
+//			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 30, 20, 1]), 1);
 			// 光源颜色
-			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 1, Vector.<Number>([1, 1, 1, 1]), 1);
+//			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 1, Vector.<Number>([1, 1, 1, 1]), 1);
 		}
 		
 		/**

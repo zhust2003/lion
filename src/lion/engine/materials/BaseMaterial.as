@@ -11,8 +11,8 @@ package lion.engine.materials
 			super();
 			vshader = new AGALMiniAssembler();
 			fshader = new AGALMiniAssembler();
-			vshader.assemble(Context3DProgramType.VERTEX, vertexShader, false);
-			fshader.assemble(Context3DProgramType.FRAGMENT, fragmentShader, false);  
+			vshader.assemble(Context3DProgramType.VERTEX, vertexShader);
+			fshader.assemble(Context3DProgramType.FRAGMENT, fragmentShader);  
 		}
 		
 		protected function get vertexShader():String {

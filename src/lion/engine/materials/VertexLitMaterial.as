@@ -19,6 +19,7 @@ package lion.engine.materials
 
 	/**
 	 * 基本材质 
+	 * Gouraud shader
 	 * 基于顶点的简易光照模型，与固定管线的光照模型一致
 	 * @author Dalton
 	 * 
@@ -26,12 +27,12 @@ package lion.engine.materials
 	public class VertexLitMaterial extends BaseMaterial
 	{
 		// 环境光
-		private var ambient:Vector4;
+		public var ambient:Vector4;
 		// 漫反射光
-		private var diffuse:Vector4;
+		public var diffuse:Vector4;
 		// 镜面反射光
 		// 第四个元素为镜面发射的发光系数
-		private var specular:Vector4;
+		public var specular:Vector4;
 		
 		protected var _vertexConstantData:Vector.<Number> = new Vector.<Number>();
 		protected var _fragmentConstantData:Vector.<Number> = new Vector.<Number>();
@@ -40,9 +41,25 @@ package lion.engine.materials
 		// 光照顶点索引
 		private var _lightVetexConstantIndex:int;
 		
+		private var _normalMatrixIndex:int;
+		private var _matrixIndex:int;
+		private var _viewProjectionMatrixIndex:int;
+		private var _cameraPositionIndex:int;
+		
+		private var _uvBufferIndex:int;
+		private var _normalBufferIndex:int;
+		
+		private var _diffuseVertexConstantsIndex:int;
+		private var _ambientVertexConstantsIndex:int;
+		private var _specularVertexConstantsIndex:int;
+		private var _commonVertexConstansIndex:int;
+		
 		public function VertexLitMaterial()
 		{
 			super();
+			ambient = new Vector4(0.0, 0.0, 0.0);
+			diffuse = new Vector4(0.5, 0.5, 0.5);
+			specular = new Vector4(1.0, 1.0, 1.0, 10);
 		}
 		
 		protected function updateLightConstants(lights:Vector.<Light>):void {
@@ -58,15 +75,15 @@ package lion.engine.materials
 					_vertexConstantData[k++] = dirPos.y;
 					_vertexConstantData[k++] = dirPos.z;
 					_vertexConstantData[k++] = 1;
-					
-					_vertexConstantData[k++] = dirLight.color.r;
-					_vertexConstantData[k++] = dirLight.color.g;
-					_vertexConstantData[k++] = dirLight.color.b;
+
+					_vertexConstantData[k++] = dirLight.color.r * dirLight.intensity;
+					_vertexConstantData[k++] = dirLight.color.g * dirLight.intensity;
+					_vertexConstantData[k++] = dirLight.color.b * dirLight.intensity;
 					_vertexConstantData[k++] = 1;
 					
-					_vertexConstantData[k++] = dirLight.color.r;
-					_vertexConstantData[k++] = dirLight.color.g;
-					_vertexConstantData[k++] = dirLight.color.b;
+					_vertexConstantData[k++] = dirLight.color.r * dirLight.intensity;
+					_vertexConstantData[k++] = dirLight.color.g * dirLight.intensity;
+					_vertexConstantData[k++] = dirLight.color.b * dirLight.intensity;
 					_vertexConstantData[k++] = 1;
 				}
 				
@@ -79,55 +96,80 @@ package lion.engine.materials
 					_vertexConstantData[k++] = dirPos.z;
 					_vertexConstantData[k++] = 1;
 					
-					_vertexConstantData[k++] = pointLight.color.r;
-					_vertexConstantData[k++] = pointLight.color.g;
-					_vertexConstantData[k++] = pointLight.color.b;
-					_vertexConstantData[k++] = pointLight.intensity;
-					
-					_vertexConstantData[k++] = pointLight.color.r;
-					_vertexConstantData[k++] = pointLight.color.g;
-					_vertexConstantData[k++] = pointLight.color.b;
+					_vertexConstantData[k++] = pointLight.color.r * pointLight.intensity;
+					_vertexConstantData[k++] = pointLight.color.g * pointLight.intensity;
+					_vertexConstantData[k++] = pointLight.color.b * pointLight.intensity;
 					_vertexConstantData[k++] = pointLight.distance;
+					
+					_vertexConstantData[k++] = pointLight.color.r * pointLight.intensity;
+					_vertexConstantData[k++] = pointLight.color.g * pointLight.intensity;
+					_vertexConstantData[k++] = pointLight.color.b * pointLight.intensity;
+					_vertexConstantData[k++] = 1 / (pointLight.distance);
 				}
 			}
 		}
 		
-		private function updateProgram(context:Context3D, numDirectionalLights:uint, numPointLights:uint):void
+		private function updateProgram(s:MaterialUpdateState):void
 		{
-			// 初始化着色器编译器
-			initCompiler(numDirectionalLights, numPointLights);
-			
-			// 更新寄存器索引
-			updateRegisterIndices();
-			
-			// 初始化常量数据
-			initConstantData();
-			
-			
-			// 提交顶点着色器
-			trace("Compiling AGAL Code:");
-			trace("--------------------");
-			trace(_compiler.vertexCode);
-			trace("--------------------");
-			trace(_compiler.fragmentCode);
-			var program:Program3D = context.createProgram();
-			var vertexByteCode:ByteArray = vshader.assemble(Context3DProgramType.VERTEX, _compiler.vertexCode, false);
-			var fragmentByteCode:ByteArray = fshader.assemble(Context3DProgramType.FRAGMENT, _compiler.fragmentCode, false);  
-			program.upload(vertexByteCode, fragmentByteCode);
-			context.setProgram(program);
+			if (dirty) {
+				// 初始化着色器编译器
+				initCompiler(s.numDirectionalLights, s.numPointLights);
+				
+				// 更新寄存器索引
+				updateRegisterIndices();
+				
+				// 初始化常量数据
+				initConstantData();
+				
+				
+				// 提交顶点着色器
+				if (false) {
+					trace("Compiling AGAL Code:");
+					trace("--------------------");
+					trace(_compiler.vertexCode);
+					trace("--------------------");
+					trace(_compiler.fragmentCode);
+				}
+				this.program = s.context.createProgram();
+				var vertexByteCode:ByteArray = vshader.assemble(Context3DProgramType.VERTEX, _compiler.vertexCode);
+				var fragmentByteCode:ByteArray = fshader.assemble(Context3DProgramType.FRAGMENT, _compiler.fragmentCode);  
+				program.upload(vertexByteCode, fragmentByteCode);
+				s.context.setProgram(program);
+				
+				dirty = false;
+			}
 		}
 		
 		// 更新编译器输出的光照常量索引
 		private function updateRegisterIndices():void
 		{
+			// 光照索引
 			_lightVetexConstantIndex = _compiler.lightVetexConstantIndex;
+			
+			// 通用索引
+			_normalMatrixIndex = _compiler.normalMatrixIndex;
+			_matrixIndex = _compiler.matrixIndex;
+			_viewProjectionMatrixIndex = _compiler.viewProjectionMatrixIndex;
+			_cameraPositionIndex = _compiler.cameraPositionIndex;
+			
+			// 顶点属性索引
+			_uvBufferIndex = _compiler.uvBufferIndex;
+			_normalBufferIndex = _compiler.normalBufferIndex;
+			
+			// 材质索引
+			_diffuseVertexConstantsIndex = _compiler.diffuseVertexConstantsIndex;
+			_specularVertexConstantsIndex = _compiler.specularVertexConstantsIndex;
+			_ambientVertexConstantsIndex = _compiler.ambientVertexConstantsIndex;
+			
+			// 其他通用索引
+			_commonVertexConstansIndex = _compiler.commonConstantsIndex;
 		}
 		
 		private function initConstantData():void
 		{
 			// 通过编译器获取的片段常量数量，顶点常量数量，设定这里需要赋值的常量数组长度
-			_vertexConstantData.length = _compiler.numUsedVertexConstants*4;
-			_fragmentConstantData.length = _compiler.numUsedFragmentConstants*4;
+			_vertexConstantData.length = _compiler.numUsedVertexConstants * 4;
+			_fragmentConstantData.length = _compiler.numUsedFragmentConstants * 4;
 		}
 		
 		private function initCompiler(numDirectionalLights:uint, numPointLights:uint):void
@@ -138,9 +180,9 @@ package lion.engine.materials
 			_compiler.compile();
 		}
 		
-		protected function update(context:Context3D, numDirectionalLights:uint, numPointLights:uint, lights:Vector.<Light>):void {
+		override public function update(s:MaterialUpdateState):void {
 			// TODO 判断是否需要更新程序
-			updateProgram(context, numDirectionalLights, numPointLights);
+			updateProgram(s);
 			
 			// 主要的问题就是，怎么通过动态的光源计算出动态的着色器程序
 			// 另外也计算出需要传入GPU的一些数据
@@ -150,12 +192,72 @@ package lion.engine.materials
 			// 另外通过编译器编译后输出的一些信息，比如光源偏移量等等，输出到外面给当前材质获取
 			// 当前材质知道偏移量后，设定常量值
 			
+			// 摄像机位置
+			var k:int = _cameraPositionIndex;
+			_vertexConstantData[k++] = s.cameraPosition.x;
+			_vertexConstantData[k++] = s.cameraPosition.y;
+			_vertexConstantData[k++] = s.cameraPosition.z;
+			_vertexConstantData[k++] = 1;
+			
+			
 			// 更新光照常量
-			updateLightConstants(lights);
+			updateLightConstants(s.lights);
+			
+			// 设置材质常量
+			updateMaterialConstants();
+			
+			// 设置通用常量
+			updateCommonMatrixes(s);
+			
 			
 			// 提交常量顶点数据（主要是光照相关数据）
-			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, _vertexConstantData, _compiler.numUsedVertexConstants);
-			context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, _fragmentConstantData, _compiler.numUsedFragmentConstants);
+			if (false) {
+				trace("AGAL Constant Count:");
+				trace("--------------------");
+				trace(_compiler.numUsedVertexConstants);
+				trace("--------------------");
+				trace(_compiler.numUsedFragmentConstants);
+			}
+			s.context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, _vertexConstantData, _compiler.numUsedVertexConstants);
+			s.context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, _fragmentConstantData, _compiler.numUsedFragmentConstants);
+		}
+		
+		private function updateCommonMatrixes(s:MaterialUpdateState):void
+		{
+			s.matrix.copyRawDataTo(_vertexConstantData, _matrixIndex, true);
+			s.normalMatrix.copyRawDataTo(_vertexConstantData, _normalMatrixIndex, true);
+			s.viewProjectionMatrix.copyRawDataTo(_vertexConstantData, _viewProjectionMatrixIndex, true);
+//			s.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, _matrixIndex, s.matrix, true);
+//			s.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, _normalMatrixIndex, s.normalMatrix, true);
+//			s.context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, _viewProjectionMatrixIndex, s.viewProjectionMatrix, true);
+		}
+		
+		/**
+		 * 更新材质常量 
+		 * 
+		 */		
+		private function updateMaterialConstants():void
+		{
+			var k:int = _diffuseVertexConstantsIndex;
+			_vertexConstantData[k++] = diffuse.x;
+			_vertexConstantData[k++] = diffuse.y;
+			_vertexConstantData[k++] = diffuse.z;
+			_vertexConstantData[k++] = diffuse.w;
+			k = _specularVertexConstantsIndex;
+			_vertexConstantData[k++] = specular.x;
+			_vertexConstantData[k++] = specular.y;
+			_vertexConstantData[k++] = specular.z;
+			_vertexConstantData[k++] = specular.w;
+			k = _ambientVertexConstantsIndex;
+			_vertexConstantData[k++] = ambient.x;
+			_vertexConstantData[k++] = ambient.y;
+			_vertexConstantData[k++] = ambient.z;
+			_vertexConstantData[k++] = ambient.w;
+			k = _commonVertexConstansIndex;
+			_vertexConstantData[k++] = 2;
+			_vertexConstantData[k++] = 0;
+			_vertexConstantData[k++] = 0;
+			_vertexConstantData[k++] = 0;
 		}
 	}
 }

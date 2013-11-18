@@ -10,6 +10,7 @@ package lion.examples
 	import flash.text.TextFormat;
 	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
+	import flash.utils.getTimer;
 	
 	import lion.engine.cameras.OrthographicCamera;
 	import lion.engine.cameras.PerspectiveCamera;
@@ -18,6 +19,8 @@ package lion.examples
 	import lion.engine.geometries.CubeGeometry;
 	import lion.engine.geometries.PlaneGeometry;
 	import lion.engine.geometries.SphereGeometry;
+	import lion.engine.lights.DirectionalLight;
+	import lion.engine.lights.PointLight;
 	import lion.engine.materials.BaseMaterial;
 	import lion.engine.materials.Material;
 	import lion.engine.materials.VertexLitMaterial;
@@ -25,6 +28,7 @@ package lion.examples
 	import lion.engine.math.MathUtil;
 	import lion.engine.math.Matrix3;
 	import lion.engine.math.Vector3;
+	import lion.engine.math.Vector4;
 	import lion.engine.renderer.SoftRenderer;
 	import lion.engine.renderer.Stage3DRenderer;
 	import lion.engine.textures.BitmapTexture;
@@ -59,6 +63,9 @@ package lion.examples
 		[Embed(source="../../../assets/earth.jpg", mimeType="image/jpeg")]
 		private var e:Class;
 		private var cube2:Mesh;
+		private var light:DirectionalLight;
+		private var light2:PointLight;
+		private var lastTime:int;
 		
 		public function Stage3DExample()
 		{
@@ -83,7 +90,7 @@ package lion.examples
 			m.texture = new BitmapTexture(b, false);
 			
 			cube = new Mesh(p, m);
-			cube.position.set(0, 0, 0);
+			cube.position.set(-20, 0, 0);
 			scene.add(cube);
 			
 			// 创建一个面片
@@ -107,13 +114,14 @@ package lion.examples
 			scene.add(plane);
 			
 			// 创建一个圆
-			var p3:SphereGeometry = new SphereGeometry(10, 16, 16);
+			var p3:SphereGeometry = new SphereGeometry(10, 32, 32);
 			var eb:BitmapData = (new e()).bitmapData;
 			var m2:VertexLitMaterial = new VertexLitMaterial();
+//			m2.ambient = new Vector4(0.1, 0, 0.5);
 			m2.texture = new BitmapTexture(eb);
 			
 			sphere = new Mesh(p3, m2);
-			sphere.position.set(-20, 0, 0);
+			sphere.position.set(0, 0, 0);
 			scene.add(sphere);
 			
 			// 创建一个摄像机
@@ -123,6 +131,16 @@ package lion.examples
 			center = new Vector3(0, 0, 0);
 			camera.lookAt(center);
 			scene.add(camera);
+			
+			// 创建一个光线
+			light = new DirectionalLight(0xFFFFFF, 1.5);
+			light.position.set(camera.position.x - 40, camera.position.y + 40, camera.position.z - 40);
+			scene.add(light);
+			
+			// 创建一个点光源
+			light2 = new PointLight(0xFF0000, 1.5, 80);
+			light2.position.set(camera.position.x + 40, camera.position.y + 40, camera.position.z - 40);
+			scene.add(light2);
 			
 			// 创建一个渲染器
 			renderer = new Stage3DRenderer(stage);
@@ -154,9 +172,13 @@ package lion.examples
 			cube.rotation.y += 0.01;
 			sphere.rotation.y -= 0.01;
 			plane.rotation.x += 0.01;
-			info.text = 'draw count:' + renderer.drawCount.toString();
+			var time:Number = getTimer() - lastTime;
+			var fps:int = Math.floor(1000/time);
+			info.text = 'draw count:' + renderer.drawCount.toString() + '\n';
+			info.appendText('fps:' + fps);
 			control.update();
 			renderer.render(scene, camera, viewport);
+			lastTime = getTimer();
 		}
 	}
 }
