@@ -66,6 +66,9 @@ package lion.examples
 		private var light:DirectionalLight;
 		private var light2:PointLight;
 		private var lastTime:int;
+		private var fpsSum:int;
+		private var fpsCount:int;
+		private var fpsAvg:int;
 		
 		public function Stage3DExample()
 		{
@@ -103,13 +106,13 @@ package lion.examples
 			scene.add(cube2);
 			
 			// 创建一个面片
-			var p4:PlaneGeometry = new PlaneGeometry(10, 10);
+			var p4:PlaneGeometry = new PlaneGeometry(100, 100);
 			var m3:VertexLitMaterial = new VertexLitMaterial();
-			m3.texture = new BitmapTexture(b);
+//			m3.texture = new BitmapTexture(b);
 			m3.side = Context3DTriangleFace.NONE;
 			
 			plane = new Mesh(p4, m3);
-			plane.position.set(20, 0, 0);
+			plane.position.set(0, -20, 0);
 			plane.rotation.x = -1.57;
 			scene.add(plane);
 			
@@ -127,7 +130,7 @@ package lion.examples
 			// 创建一个摄像机
 			camera = new PerspectiveCamera(60, 1);
 //			camera = new OrthographicCamera(-50, 50, 50, -50);
-			camera.position.set(0, 20, 50);
+			camera.position.set(0, 20, 100);
 			center = new Vector3(0, 0, 0);
 			camera.lookAt(center);
 			scene.add(camera);
@@ -149,10 +152,10 @@ package lion.examples
 			
 			// 信息栏
 			info = new TextField();
-			var format:TextFormat = new TextFormat();
-			format.color = 0xFFFFFF;
+			var format:TextFormat = new TextFormat('_sans', 12, 0xffffff, true);
 			info.defaultTextFormat = format;
 			info.setTextFormat(format);
+			info.selectable = false;
 			addChild(info);
 			
 			// 摄像机控制器
@@ -171,11 +174,21 @@ package lion.examples
 		{
 			cube.rotation.y += 0.01;
 			sphere.rotation.y -= 0.01;
-			plane.rotation.x += 0.01;
+//			plane.rotation.x += 0.01;
+//			plane.rotation.x = 0;
+//			plane.rotation.z = 0;
+//			plane.lookAt(camera.position);
 			var time:Number = getTimer() - lastTime;
-			var fps:int = Math.floor(1000/time);
+			var fps:int = 60;
+			if (time != 0) {
+				fps = Math.floor(1000 / time);
+			}
+			fpsSum += fps;
+			fpsCount++;
+			fpsAvg = Math.floor(fpsSum/fpsCount);
 			info.text = 'draw count:' + renderer.drawCount.toString() + '\n';
-			info.appendText('fps:' + fps);
+			info.appendText('fps:' + fps + '\n');
+			info.appendText('fpsAvg:' + fpsAvg + '\n');
 			control.update();
 			renderer.render(scene, camera, viewport);
 			lastTime = getTimer();

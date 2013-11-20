@@ -6,6 +6,7 @@ package lion.engine.materials
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Program3D;
 	import flash.display3D.textures.Texture;
+	import flash.display3D.textures.TextureBase;
 	import flash.utils.ByteArray;
 	
 	import lion.engine.lights.DirectionalLight;
@@ -53,6 +54,7 @@ package lion.engine.materials
 		private var _ambientVertexConstantsIndex:int;
 		private var _specularVertexConstantsIndex:int;
 		private var _commonVertexConstansIndex:int;
+		private var _texturesIndex:int;
 		
 		public function VertexLitMaterial()
 		{
@@ -123,7 +125,7 @@ package lion.engine.materials
 				
 				
 				// 提交顶点着色器
-				if (false) {
+				if (true) {
 					trace("Compiling AGAL Code:");
 					trace("--------------------");
 					trace(_compiler.vertexCode);
@@ -134,10 +136,10 @@ package lion.engine.materials
 				var vertexByteCode:ByteArray = vshader.assemble(Context3DProgramType.VERTEX, _compiler.vertexCode);
 				var fragmentByteCode:ByteArray = fshader.assemble(Context3DProgramType.FRAGMENT, _compiler.fragmentCode);  
 				program.upload(vertexByteCode, fragmentByteCode);
-				s.context.setProgram(program);
-				
 				dirty = false;
 			}
+			
+			s.context.setProgram(program);
 		}
 		
 		// 更新编译器输出的光照常量索引
@@ -155,6 +157,7 @@ package lion.engine.materials
 			// 顶点属性索引
 			_uvBufferIndex = _compiler.uvBufferIndex;
 			_normalBufferIndex = _compiler.normalBufferIndex;
+			_texturesIndex = _compiler.texturesIndex;
 			
 			// 材质索引
 			_diffuseVertexConstantsIndex = _compiler.diffuseVertexConstantsIndex;
@@ -177,12 +180,22 @@ package lion.engine.materials
 			_compiler = new ShaderCompiler();
 			_compiler.numDirectionalLights = numDirectionalLights;
 			_compiler.numPointLights = numPointLights;
-			_compiler.compile();
+			_compiler.compile(texture);
 		}
 		
 		override public function update(s:MaterialUpdateState):void {
 			// TODO 判断是否需要更新程序
 			updateProgram(s);
+			
+			// 如果有纹理的话，绑定纹理
+			if (texture) {
+				var t:TextureBase = texture.getTexture(s.context);
+				s.context.setTextureAt(_texturesIndex, t);
+				// 设定va uv
+				s.renderElement.setUVBuffer(_uvBufferIndex);
+			}
+			// 设定va normal
+			s.renderElement.setNormalBuffer(_normalBufferIndex);
 			
 			// 主要的问题就是，怎么通过动态的光源计算出动态的着色器程序
 			// 另外也计算出需要传入GPU的一些数据

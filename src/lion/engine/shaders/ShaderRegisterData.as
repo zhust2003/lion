@@ -20,6 +20,8 @@ package lion.engine.shaders
 		public var targetLightColor:ShaderRegisterElement;
 		// 视线向量
 		public var viewDirVertex:ShaderRegisterElement;
+		// uv变量，从顶点寄存器转到片段寄存器
+		public var uvVarying:ShaderRegisterElement;
 		
 		public function ShaderRegisterData()
 		{

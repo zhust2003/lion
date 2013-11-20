@@ -88,5 +88,11 @@ package lion.games.controls
 				move(new Vector3(-1, 0, 0));
 			}
 		}
+		
+		public function dispose():void {
+			stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+			stage.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+		}
 	}
 }

@@ -95,5 +95,12 @@ package lion.games.controls
 		public function update():void {
 			
 		}
+		
+		public function dispose():void {
+			stage.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+			stage.removeEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel);
+			stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+		}
 	}
 }

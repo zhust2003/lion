@@ -39,6 +39,7 @@ package lion.engine.renderer
 	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 	import lion.engine.math.Vector4;
+	import lion.engine.renderer.base.RenderableElement;
 	
 	public class Stage3DRenderer implements IRenderer
 	{
@@ -46,8 +47,6 @@ package lion.engine.renderer
 		public var stage3D:Stage3D;
 		private var context:Context3D;
 		
-		private var indexList:IndexBuffer3D;
-		private var vertexes:VertexBuffer3D;
 		private var finalTransform:Matrix3D = new Matrix3D();
 		
 		private var viewMatrix:Matrix4;
@@ -215,13 +214,12 @@ package lion.engine.renderer
 			s.reset();
 			fillRenderList(scene);
 			s.lights = lights;
+			
+			// 对物体进行排序
 			renderList.sort(painterSortByObject);
 			
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
 			renderElements.length = 0;
-			// 所有顶点
-			var pool:Vector.<Number> = new Vector.<Number>();
-			var offset:int = 0;
 			
 			for each (var r:RenderObject in renderList) {
 				var o:Object3D = r.object;
@@ -235,8 +233,10 @@ package lion.engine.renderer
 					var uvs:Array = geometry.faceVertexUvs;
 					
 					// 将三角形面片转成可渲染的面片数据
-					var t:Vector.<uint> = new Vector.<uint>();
+					var vertexPool:Vector.<Number> = new Vector.<Number>();
+					var indexPool:Vector.<uint> = new Vector.<uint>();
 					var faceIndex:int = 0;
+					var offset:int = 0;
 					for each (var f:Surface in faces) {
 						// 顶点数据
 						var v1:Vector3 = vertices[f.a];
@@ -248,35 +248,36 @@ package lion.engine.renderer
 						
 						var uv:Array = uvs[faceIndex];
 						
+						// 插入所有顶点数据
 						for each (var v:Vector3 in allVertices) {
 							// 坐标
-							pool.push(v.x);
-							pool.push(v.y);
-							pool.push(v.z);
+							vertexPool.push(v.x);
+							vertexPool.push(v.y);
+							vertexPool.push(v.z);
 							
 							// u,v
-							pool.push(uv[i].x);
-							pool.push(uv[i].y);
+							vertexPool.push(uv[i].x);
+							vertexPool.push(uv[i].y);
 							
 							// 法线
 							// 如果有顶点法线
 							if (vertexNormals.length == 3) {
 								var vn:Vector3 = vertexNormals[i];
-								pool.push(vn.x);
-								pool.push(vn.y);
-								pool.push(vn.z);
+								vertexPool.push(vn.x);
+								vertexPool.push(vn.y);
+								vertexPool.push(vn.z);
 							} else {
-								pool.push(f.normal.x);
-								pool.push(f.normal.y);
-								pool.push(f.normal.z);
+								vertexPool.push(f.normal.x);
+								vertexPool.push(f.normal.y);
+								vertexPool.push(f.normal.z);
 							}
 							i++;
 						}
 						
 						// 索引数据
-						t.push(offset);
-						t.push(offset + 1);
-						t.push(offset + 2);
+						indexPool.push(offset);
+						indexPool.push(offset + 1);
+						indexPool.push(offset + 2);
 						offset += 3;
 						faceIndex ++;
 					}
@@ -287,28 +288,21 @@ package lion.engine.renderer
 					var centroid:Vector3 = new Vector3();
 					var re:RenderableElement = new RenderableElement();
 					re.model = modelMatrix;
-					re.triangleCount = t.length / 3;
-					re.indexList = t;
+					re.triangleCount = indexPool.length / 3;
+					re.indexList = indexPool;
+					re.vertexList = vertexPool;
 					centroid.copy(Mesh(o).position).applyProjection(viewProjectionMatrix);
 					re.z = centroid.z;
 					re.object = r.object;
+					re.context = context;
 					renderElements.push(re);
 				}
 			}
 			
-			if (pool.length <= 0) return;
+//			if (pool.length <= 0) return;
 			
 			// 对基本渲染元素进行排序
 			renderElements.sort(painterSort);
-			
-			// 顶点数组
-			const dataPerVertex:int = 8;
-			vertexes = context.createVertexBuffer(pool.length/dataPerVertex, dataPerVertex);
-			vertexes.uploadFromVector(pool, 0, pool.length/dataPerVertex);
-			
-			context.setVertexBufferAt(0, vertexes, 0, Context3DVertexBufferFormat.FLOAT_3); // va0 is position
-//			context.setVertexBufferAt(1, vertexes, 3, Context3DVertexBufferFormat.FLOAT_2); // va1 is uv
-			context.setVertexBufferAt(2, vertexes, 5, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
 			
 			
 			drawCount = 0;
@@ -317,24 +311,12 @@ package lion.engine.renderer
 			
 			// 光栅化，将所有的基本渲染元素光栅化到窗口
 			for each (var e:RenderableElement in renderElements) {
-				// 索引数组
-				indexList = context.createIndexBuffer(e.indexList.length);
-				indexList.uploadFromVector(e.indexList, 0, e.indexList.length);
-
-				// 模型视图投影矩阵
-//				finalTransform.identity();
-//				finalTransform.append(e.model.toMatrix3D());
-//				finalTransform.append(viewProjectionMatrix.toMatrix3D());
+				e.initVertexBuffer();
+				e.initIndexBuffer();
+				e.setPositionBuffer();
 				
 				// 模型矩阵
 				s.matrix = e.model.toMatrix3D();
-				
-				// 将常量提交给顶点着色器，对应变量为vc2
-//				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 2, finalTransform, true);
-				
-//				finalTransform.identity();
-//				finalTransform.append(e.model.toMatrix3D());
-//				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 6, finalTransform, true);
 				
 				// 投影矩阵
 				s.viewProjectionMatrix = viewProjectionMatrix.toMatrix3D();
@@ -342,92 +324,59 @@ package lion.engine.renderer
 				// 法线矩阵
 				var normalMatrix:Matrix3 = new Matrix3().getNormalMatrix(e.model);
 				s.normalMatrix = normalMatrix.toMatrix3D();
-//				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 10, normalMatrix.toMatrix3D(), true);
 				
+				// 相机位置
 				s.cameraPosition = camera.position;
+				
+				// 渲染元素
+				s.renderElement = e;
 				
 				// 设置渲染程序（顶点，片段）
 				updateMaterial(e.object as Mesh);
 				
+				e.render();
 				
-				// 绘制三角形
-				context.drawTriangles(indexList, 0, e.triangleCount);
 				drawCount++;
 				
-				// 清理索引数据
-				indexList.dispose();
+				e.dispose();
+				
+				// 重新清理绑定纹理及顶点缓存
+				for (var ia:uint = 0; ia < 8; ++ia) {
+					context.setVertexBufferAt(ia, null);
+					context.setTextureAt(ia, null);
+				}
 			}
 			
-			// 清理顶点数据
-			vertexes.dispose();
 			
 			// 呈现
 			context.present();
-			
-			// 重新清理绑定纹理及顶点缓存
-			for (var ia:uint = 0; ia < 8; ++ia) {
-				context.setVertexBufferAt(ia, null);
-				context.setTextureAt(ia, null);
-			}
 		}
 		
+		/**
+		 * 更新材质 
+		 * @param object
+		 * 
+		 */		
 		private function updateMaterial(object:Mesh):void
 		{
-//			// 如果材质对应的着色器对还没初始化
-//			if (object.material.dirty) {
-//				object.material.program = initProgram(object.material.vshader, object.material.fshader);
-//				object.material.dirty = false;
-//			}
-//			// 设置着色器对
-//			var program:Program3D = object.material.program;
-//			if (program != currentProgram3D) {
-//				context.setProgram(program);
-//				currentProgram3D = program;
-//			}
-			
+			// 更新材质信息
 			object.material.update(s);
-			
-			// 初始化材质需要提交给GPU的东西，
-			// 比如纹理需要绑定等等
-//			if (object.material.texture) {
-//				var t:TextureBase = object.material.texture.getTexture(context);
-//				context.setTextureAt(0, t);
-//			}
 			
 			// 剔除面
 			if (object.material.side != currentSide) {
 				context.setCulling(object.material.side);
 				currentSide = object.material.side;
 			}
-			
-			// 计算所有的光照
-			// 提交到着色器
-			
-			// 临时光源
-			// 光源位置
-//			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 0, Vector.<Number>([0, 30, 20, 1]), 1);
-			// 光源颜色
-//			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 1, Vector.<Number>([1, 1, 1, 1]), 1);
-		}
-		
-		/**
-		 * 初始化着色器对 
-		 * @param vertexAssembly
-		 * @param fragmentAssembly
-		 * 
-		 */		
-		private function initProgram(vertexAssembly:AGALMiniAssembler, fragmentAssembly:AGALMiniAssembler):Program3D {
-			var program:Program3D = context.createProgram();
-			program.upload(vertexAssembly.agalcode, fragmentAssembly.agalcode);
-			
-			return program;
 		}
 	}
 }
 
 
 import flash.display.Graphics;
+import flash.display3D.Context3D;
+import flash.display3D.Context3DVertexBufferFormat;
 import flash.display3D.IndexBuffer3D;
+import flash.display3D.VertexBuffer3D;
 
 import lion.engine.core.Object3D;
 import lion.engine.materials.Material;
@@ -435,20 +384,13 @@ import lion.engine.math.Matrix4;
 import lion.engine.math.Vector3;
 import lion.engine.math.Vector4;
 
+/**
+ * 渲染基本物件 
+ * @author Dalton
+ * 
+ */
 class RenderObject {
 	public var id:int;
 	public var object:Object3D;
 	public var z:Number;
-}
-
-class RenderableElement {
-	public var id:int;
-	public var z:Number;
-	public var model:Matrix4;
-	public var indexList:Vector.<uint>;
-	public var triangleCount:uint;
-	public var object:Object3D;
-	public function render(context:Graphics):void {
-		
-	}
 }

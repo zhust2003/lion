@@ -1,5 +1,7 @@
 package lion.engine.shaders
 {
+	import lion.engine.textures.BitmapTexture;
+
 	/**
 	 * 着色器编译器
 	 * 由于AGAL实在太低级，大部分引擎都做了简易编译器 
@@ -50,6 +52,8 @@ package lion.engine.shaders
 		public var uvBufferIndex:int;
 		// 法线缓存索引，一般是va2
 		public var normalBufferIndex:int;
+		// 纹理索引
+		public var texturesIndex:int;
 		
 		
 		private var diffuseInputRegister:ShaderRegisterElement;
@@ -57,6 +61,7 @@ package lion.engine.shaders
 		private var ambientInputRegister:ShaderRegisterElement;
 		private var totalLightColor:ShaderRegisterElement;
 		private var commonInputRegister:ShaderRegisterElement;
+		private var _texture:BitmapTexture;
 		
 		public function ShaderCompiler()
 		{
@@ -75,7 +80,7 @@ package lion.engine.shaders
 			return _vertexCode;
 		}
 
-		public function compile():void {
+		public function compile(texture:BitmapTexture):void {
 			// 编译的最终目的就是生成顶点着色器代码以及片段着色器代码
 			_vertexCode = "";
 			_fragmentCode = "";
@@ -87,7 +92,10 @@ package lion.engine.shaders
 			compileGlobalPositionCode();
 			compileProjectionCode();
 			
-			compileUVCode();
+			_texture = texture;
+			if (_texture) {
+				compileUVCode();
+			}
 			compileNormalCode();
 			compileViewDirCode();
 			compileLightingCode();
@@ -110,6 +118,12 @@ package lion.engine.shaders
 		{
 			var uvAttributeReg:ShaderRegisterElement = _registerCache.getFreeVertexAttribute();
 			uvBufferIndex = uvAttributeReg.index;
+			
+			
+			var varying:ShaderRegisterElement = _registerCache.getFreeVarying();
+			_sharedRegisters.uvVarying = varying;
+			
+			_vertexCode += "mov " + _sharedRegisters.uvVarying + ", " + uvAttributeReg + "\n";
 		}
 		
 		public function get numUsedVertexConstants():uint
@@ -390,6 +404,7 @@ package lion.engine.shaders
 			 viewProjectionMatrixIndex = viewProjectionReg.index * 4;
 			 var tmp:ShaderRegisterElement = _registerCache.getFreeVertexVectorTemp();
 			 
+			 
 			_vertexCode +=  "m44 " + tmp + ", " + _sharedRegisters.globalPositionVertex + ", " + viewProjectionReg + "\n" +
 							"mov op, " + tmp + " \n";
 			_registerCache.removeVertexTempUsage(tmp);
@@ -397,11 +412,39 @@ package lion.engine.shaders
 		
 		private function compileFragmentOutput():void
 		{
-			// 如果有纹理，获取纹理颜色
-			var ftemp:ShaderRegisterElement = _registerCache.getFreeFragmentVectorTemp();
+			var albedo:ShaderRegisterElement = _registerCache.getFreeFragmentVectorTemp();
+			if (_texture) {
+				var textureReg:ShaderRegisterElement = _registerCache.getFreeTextureReg();
+				texturesIndex = textureReg.index;
+				_fragmentCode += getTex2DSampleCode(albedo, textureReg, _texture) +
+								 "mul " + albedo + ".xyz, " + albedo + ", " + _sharedRegisters.targetLightColor + "\n";
+			} else {
+				_fragmentCode += "mov " + albedo + ", " + _sharedRegisters.targetLightColor + "\n";
+			}
 			
-			_fragmentCode += "mov " + _registerCache.fragmentOutputRegister + ", " + _sharedRegisters.targetLightColor + " \n";
+			_fragmentCode += "mov " + _registerCache.fragmentOutputRegister + ", " + albedo + " \n";
 			
+		}
+		
+		protected function getTex2DSampleCode(targetReg:ShaderRegisterElement, 
+											  inputReg:ShaderRegisterElement, 
+											  texture:BitmapTexture, 
+											  uvReg:ShaderRegisterElement = null, 
+											  forceWrap:String = null, 
+											  useSmoothTextures:Boolean = false):String
+		{
+			var wrap:String = forceWrap ? "wrap" : "clamp";
+			var filter:String;
+			var format:String = "";
+			var enableMipMaps:Boolean = texture.generateMipmaps;
+			
+			if (useSmoothTextures)
+				filter = enableMipMaps? "linear,miplinear" : "linear";
+			else
+				filter = enableMipMaps? "nearest,mipnearest" : "nearest";
+			
+			uvReg ||= _sharedRegisters.uvVarying;
+			return "tex " + targetReg + ", " + uvReg + ", " + inputReg + " <2d," + filter + "," + format + wrap + ">\n";
 		}
 	}
 }

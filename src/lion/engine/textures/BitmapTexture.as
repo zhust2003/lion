@@ -11,7 +11,7 @@ package lion.engine.textures
 	public class BitmapTexture
 	{
 		private var bitmapData:BitmapData;
-		private var generateMipmaps:Boolean;
+		public var generateMipmaps:Boolean;
 		private var mipMapHolder:BitmapData;
 		private var textureBase:Texture;
 		
