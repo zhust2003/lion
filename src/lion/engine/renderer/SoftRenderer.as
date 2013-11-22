@@ -102,6 +102,7 @@ package lion.engine.renderer
 						p.y *= invW;
 						p.z *= invW;
 						p.w = 1;
+						trace(p.z);
 						
 						// 视口变换
 						var w:Number = viewport.width;

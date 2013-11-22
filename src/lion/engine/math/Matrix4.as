@@ -475,7 +475,10 @@ package lion.engine.math
 		
 		/**
 		 * 正射视景体到标准视景体的转换
-		 * 标准视景体为 [-1, 1] x [-1, 1] x [-1, 1] 
+		 * opengl
+		 * 标准视景体为 [-1, 1] x [-1, 1] x [-1, 1]
+		 * dx
+		 * 标准视景体为[0, 1] 
 		 * @param left
 		 * @param right
 		 * @param top
@@ -491,14 +494,25 @@ package lion.engine.math
 			var h:Number = top - bottom;
 			var p:Number = far - near;
 			
-			var x:Number = (right + left) / w;
-			var y:Number = (top + bottom) / h;
-			var z:Number = (far + near) / p;
+			// opengl
+			var dx:Number = (right + left) / w;
+			var dy:Number = (top + bottom) / h;
+			var dz:Number = (near) / p;
 			
-			te[0] = 2 / w;	te[1] = 0;		te[2] = 0;		te[3] = -x;
-			te[4] = 0;		te[5] = 2 / h;	te[6] = 0;		te[7] = -y;
-			te[8] = 0;		te[9] = 0;		te[10] = -2 / p;te[11] = -z;
+			te[0] = 2 / w;	te[1] = 0;		te[2] = 0;		te[3] = -dx;
+			te[4] = 0;		te[5] = 2 / h;	te[6] = 0;		te[7] = -dy;
+			te[8] = 0;		te[9] = 0;		te[10] = -1 / p;te[11] = -dz;
 			te[12] = 0;		te[13] = 0;		te[14] = 0;		te[15] = 1;
+			
+			// dx
+//			var dx:Number = (left) / w;
+//			var dy:Number = (bottom) / h;
+//			var dz:Number = (near) / p;
+//			
+//			te[0] = 1 / w;	te[1] = 0;		te[2] = 0;		te[3] = -dx;
+//			te[4] = 0;		te[5] = 1 / h;	te[6] = 0;		te[7] = -dy;
+//			te[8] = 0;		te[9] = 0;		te[10] = -1 / p;te[11] = -dz;
+//			te[12] = 0;		te[13] = 0;		te[14] = 0;		te[15] = 1;
 			
 			return this;
 		}

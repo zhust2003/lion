@@ -1,5 +1,6 @@
 package lion.engine.shaders
 {
+	import lion.engine.textures.BaseTexture;
 	import lion.engine.textures.BitmapTexture;
 
 	/**
@@ -61,7 +62,7 @@ package lion.engine.shaders
 		private var ambientInputRegister:ShaderRegisterElement;
 		private var totalLightColor:ShaderRegisterElement;
 		private var commonInputRegister:ShaderRegisterElement;
-		private var _texture:BitmapTexture;
+		private var _texture:BaseTexture;
 		
 		public function ShaderCompiler()
 		{
@@ -80,7 +81,7 @@ package lion.engine.shaders
 			return _vertexCode;
 		}
 
-		public function compile(texture:BitmapTexture):void {
+		public function compile(texture:BaseTexture):void {
 			// 编译的最终目的就是生成顶点着色器代码以及片段着色器代码
 			_vertexCode = "";
 			_fragmentCode = "";
@@ -348,6 +349,7 @@ package lion.engine.shaders
 				
 								"dp3 " + ift + ".w, " + lightDirReg + ", " + lightDirReg + "\n" +
 								"sqt " + ift + ".w, " + ift + ".w \n" +
+								"sub " + ift + ".w, " + diffuseColorReg + ".w, " + ift + ".w \n" + 
 //								// 计算光线衰减值
 //								// 衰减系数在漫反射的最后一个值那边
 								"mul " + ift + ".w, " + specularColorReg + ".w, " + ift + ".w \n" + 
@@ -428,7 +430,7 @@ package lion.engine.shaders
 		
 		protected function getTex2DSampleCode(targetReg:ShaderRegisterElement, 
 											  inputReg:ShaderRegisterElement, 
-											  texture:BitmapTexture, 
+											  texture:BaseTexture, 
 											  uvReg:ShaderRegisterElement = null, 
 											  forceWrap:String = null, 
 											  useSmoothTextures:Boolean = false):String

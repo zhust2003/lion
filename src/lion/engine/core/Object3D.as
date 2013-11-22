@@ -34,6 +34,12 @@ package lion.engine.core
 		
 		public var userData:Object;
 		
+		// 阴影相关
+		// 是否产生阴影
+		public var castShadow:Boolean = false;
+		// 是否接收阴影
+		public var receiveShadow:Boolean = false;
+		
 		/**
 		 * 坐标轴常量 
 		 */		

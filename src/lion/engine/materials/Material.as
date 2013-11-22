@@ -7,6 +7,7 @@ package lion.engine.materials
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Program3D;
 	
+	import lion.engine.textures.BaseTexture;
 	import lion.engine.textures.BitmapTexture;
 
 	/**
@@ -38,7 +39,7 @@ package lion.engine.materials
 		public var fshader:AGALMiniAssembler;
 		
 		// 使用的纹理
-		public var texture:BitmapTexture;
+		public var texture:BaseTexture;
 		
 		public function Material()
 		{

@@ -8,32 +8,15 @@ package lion.engine.textures
 	
 	import lion.engine.utils.MipmapGenerator;
 
-	public class BitmapTexture
+	public class BitmapTexture extends BaseTexture
 	{
 		private var bitmapData:BitmapData;
-		public var generateMipmaps:Boolean;
 		private var mipMapHolder:BitmapData;
-		private var textureBase:Texture;
 		
 		public function BitmapTexture(bitmapData:BitmapData, generateMipmaps:Boolean = true)
 		{
 			this.bitmapData = bitmapData;
-			this.generateMipmaps = generateMipmaps;
-		}
-		
-		/**
-		 * 获取context3D可以使用的纹理类 
-		 * @return 
-		 * 
-		 */		
-		public function getTexture(context3D:Context3D):TextureBase {
-			// 创建纹理对象
-			if (! textureBase) {
-				textureBase = context3D.createTexture(bitmapData.width, bitmapData.height, Context3DTextureFormat.BGRA, false);
-				// 提交纹理对象到GPU
-				uploadContent(textureBase);
-			}
-			return textureBase;
+			super(bitmapData.width, bitmapData.height, generateMipmaps);
 		}
 		
 		/**
@@ -41,7 +24,7 @@ package lion.engine.textures
 		 * @param texture
 		 * 
 		 */		
-		private function uploadContent(texture:TextureBase):void {
+		override protected function uploadContent(texture:Texture):void {
 			if (generateMipmaps) {
 				MipmapGenerator.generateMipMaps(bitmapData, texture, mipMapHolder, true);
 			} else {
@@ -49,10 +32,10 @@ package lion.engine.textures
 			}
 		}
 		
-		public function dispose():void
+		override public function dispose():void
 		{
-			if (textureBase) {
-				textureBase.dispose();
+			if (bitmapData) {
+				bitmapData.dispose();
 			}
 		}
 	}

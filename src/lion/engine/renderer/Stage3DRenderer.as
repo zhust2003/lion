@@ -7,6 +7,7 @@ package lion.engine.renderer
 	import flash.display.Stage;
 	import flash.display.Stage3D;
 	import flash.display3D.Context3D;
+	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DCompareMode;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DTextureFormat;
@@ -19,16 +20,20 @@ package lion.engine.renderer
 	import flash.display3D.textures.TextureBase;
 	import flash.events.ErrorEvent;
 	import flash.events.Event;
+	import flash.geom.Matrix;
 	import flash.geom.Matrix3D;
 	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
 	
 	import lion.engine.cameras.Camera;
+	import lion.engine.cameras.OrthographicCamera;
+	import lion.engine.cameras.PerspectiveCamera;
 	import lion.engine.core.Mesh;
 	import lion.engine.core.Object3D;
 	import lion.engine.core.Scene;
 	import lion.engine.core.Surface;
 	import lion.engine.geometries.Geometry;
+	import lion.engine.geometries.PlaneGeometry;
 	import lion.engine.lights.DirectionalLight;
 	import lion.engine.lights.Light;
 	import lion.engine.lights.PointLight;
@@ -36,16 +41,18 @@ package lion.engine.renderer
 	import lion.engine.math.Frustum;
 	import lion.engine.math.Matrix3;
 	import lion.engine.math.Matrix4;
+	import lion.engine.math.Plane;
 	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 	import lion.engine.math.Vector4;
 	import lion.engine.renderer.base.RenderableElement;
+	import lion.engine.textures.RenderTexture;
 	
 	public class Stage3DRenderer implements IRenderer
 	{
 		private var stage:Stage;
 		public var stage3D:Stage3D;
-		private var context:Context3D;
+		public var context:Context3D;
 		
 		private var finalTransform:Matrix3D = new Matrix3D();
 		
@@ -111,9 +118,12 @@ package lion.engine.renderer
 		private function configContext3D():void
 		{
 			context.enableErrorChecking = true; //Can slow rendering - only turn on when developing/testing
-			context.configureBackBuffer(stage.stageWidth, stage.stageHeight, 2, false);
+			context.configureBackBuffer(stage.stageWidth, stage.stageHeight, 2, true);
+			// not blend
+			context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
 			// stage3d 顺时针是正面朝向，逆时针是反面朝向，与opengl相反
-//			context.setCulling(Context3DTriangleFace.FRONT);
+			context.setCulling(Context3DTriangleFace.NONE);
+			currentSide = Context3DTriangleFace.NONE;
 //			context.setDepthTest(true, Context3DCompareMode.LESS_EQUAL);
 			
 			// 设置纹理
@@ -293,6 +303,7 @@ package lion.engine.renderer
 					re.vertexList = vertexPool;
 					centroid.copy(Mesh(o).position).applyProjection(viewProjectionMatrix);
 					re.z = centroid.z;
+					
 					re.object = r.object;
 					re.context = context;
 					renderElements.push(re);
@@ -307,49 +318,115 @@ package lion.engine.renderer
 			
 			drawCount = 0;
 			
+			
+			// pre render
+			// 更新光照阴影图
+			updateLightShadow();
+			
+			context.setRenderToBackBuffer();
 			context.clear(0.19, 0.30, 0.47);
 			
 			// 光栅化，将所有的基本渲染元素光栅化到窗口
 			for each (var e:RenderableElement in renderElements) {
-				e.initVertexBuffer();
-				e.initIndexBuffer();
-				e.setPositionBuffer();
-				
-				// 模型矩阵
-				s.matrix = e.model.toMatrix3D();
-				
-				// 投影矩阵
-				s.viewProjectionMatrix = viewProjectionMatrix.toMatrix3D();
-				
-				// 法线矩阵
-				var normalMatrix:Matrix3 = new Matrix3().getNormalMatrix(e.model);
-				s.normalMatrix = normalMatrix.toMatrix3D();
-				
-				// 相机位置
-				s.cameraPosition = camera.position;
-				
-				// 渲染元素
-				s.renderElement = e;
-				
-				// 设置渲染程序（顶点，片段）
-				updateMaterial(e.object as Mesh);
-				
-				e.render();
-				
-				drawCount++;
-				
-				e.dispose();
-				
-				// 重新清理绑定纹理及顶点缓存
-				for (var ia:uint = 0; ia < 8; ++ia) {
-					context.setVertexBufferAt(ia, null);
-					context.setTextureAt(ia, null);
-				}
+				renderElement(e, camera, viewProjectionMatrix);
 			}
 			
 			
 			// 呈现
 			context.present();
+			
+			// post render
+		}
+		
+		private function renderElement(e:RenderableElement, camera:Camera, vpm:Matrix4):void {
+			e.initVertexBuffer();
+			e.initIndexBuffer();
+			e.setPositionBuffer();
+			
+			// 模型矩阵
+			s.matrix = e.model.toMatrix3D();
+			
+			// 投影矩阵
+			s.viewProjectionMatrix = vpm.toMatrix3D();
+			
+			// 法线矩阵
+			var normalMatrix:Matrix3 = new Matrix3().getNormalMatrix(e.model);
+			s.normalMatrix = normalMatrix.toMatrix3D();
+			
+			// 相机位置
+			s.cameraPosition = camera.position;
+			
+			// 渲染元素
+			s.renderElement = e;
+			
+			// 设置渲染程序（顶点，片段）
+			updateMaterial(e.object as Mesh);
+			
+			e.render();
+			
+			drawCount++;
+			
+			e.dispose();
+			
+			// 重新清理绑定纹理及顶点缓存
+			for (var ia:uint = 0; ia < 8; ++ia) {
+				context.setVertexBufferAt(ia, null);
+				context.setTextureAt(ia, null);
+			}
+		}
+		
+		/**
+		 * 更新光照阴影图 
+		 * 
+		 */		
+		private function updateLightShadow():void
+		{
+			// 遍历每个需要产生阴影的光照
+			for each (var l:Light in lights) {
+				if (l.castShadow && ! l.shadowMap) {
+
+					l.shadowMap = new RenderTexture(512, 512);
+					// 以这个shadowmap作为渲染目标
+					context.setRenderToTexture(l.shadowMap.getTexture(context, true), true);
+					context.clear(0, 0, 0);
+					
+					// 不同的光源不同的相机类型
+					var camera:Camera;
+					if (l is DirectionalLight) {
+						camera = new OrthographicCamera(-200, 200, 200, -200);
+					} else if (l is PointLight) {
+						camera = new PerspectiveCamera(50, 1);
+					}
+					// 光源位置
+					camera.position.getPositionFromMatrix(l.matrixWorld);
+					// 光源方向
+					var normalMatrix:Matrix3 = new Matrix3();
+					normalMatrix.getNormalMatrix(l.matrixWorld);
+					camera.lookAt(new Vector3(0, 0, -1).applyMatrix3(normalMatrix));
+//					camera.lookAt(new Vector3(0, 0, 0));
+					camera.updateMatrixWorld();
+
+					// 以这个光作为摄像机位置
+					// 生成每个光照的shadowmap
+					var vm:Matrix4 = new Matrix4();
+					var vpm:Matrix4 = new Matrix4();
+					// 新的视图投影矩阵
+					vm.copy(camera.matrixWorldInverse.getInverse(camera.matrixWorld));
+					vpm.multiplyMatrices(camera.projectionMatrix, vm);
+					
+					for each (var e:RenderableElement in renderElements) {
+						// TODO 增加深度图的shader
+						renderElement(e, camera, vpm);
+					}
+					
+					// 调试使用
+					for each (var e:RenderableElement in renderElements) {
+						if (Mesh(e.object).geometry is PlaneGeometry) {
+							Mesh(e.object).material.texture = l.shadowMap;
+						}
+					}
+				}
+			}
 		}
 		
 		/**

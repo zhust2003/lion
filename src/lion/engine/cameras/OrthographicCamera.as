@@ -14,7 +14,7 @@ package lion.engine.cameras
 		private var top:Number;
 		private var bottom:Number;
 		private var near:Number
-		private var far:Number;
+		public var far:Number;
 		
 		public function OrthographicCamera(left:Number, right:Number, top:Number, bottom:Number, near:Number = 0.1, far:Number = 2000)
 		{
