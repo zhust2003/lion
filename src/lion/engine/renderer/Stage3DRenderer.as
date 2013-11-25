@@ -37,6 +37,8 @@ package lion.engine.renderer
 	import lion.engine.lights.DirectionalLight;
 	import lion.engine.lights.Light;
 	import lion.engine.lights.PointLight;
+	import lion.engine.materials.DepthMaterial;
+	import lion.engine.materials.Material;
 	import lion.engine.materials.MaterialUpdateState;
 	import lion.engine.math.Frustum;
 	import lion.engine.math.Matrix3;
@@ -338,7 +340,8 @@ package lion.engine.renderer
 			// post render
 		}
 		
-		private function renderElement(e:RenderableElement, camera:Camera, vpm:Matrix4):void {
+		private function renderElement(e:RenderableElement, camera:Camera, vpm:Matrix4, material:Material = null):void {
+			// 初始化顶点，索引缓冲区
 			e.initVertexBuffer();
 			e.initIndexBuffer();
 			e.setPositionBuffer();
@@ -360,7 +363,7 @@ package lion.engine.renderer
 			s.renderElement = e;
 			
 			// 设置渲染程序（顶点，片段）
-			updateMaterial(e.object as Mesh);
+			updateMaterial(e.object as Mesh, material);
 			
 			e.render();
 			
@@ -384,7 +387,6 @@ package lion.engine.renderer
 			// 遍历每个需要产生阴影的光照
 			for each (var l:Light in lights) {
 				if (l.castShadow && ! l.shadowMap) {
-
 					l.shadowMap = new RenderTexture(512, 512);
 					// 以这个shadowmap作为渲染目标
 					context.setRenderToTexture(l.shadowMap.getTexture(context, true), true);
@@ -414,9 +416,11 @@ package lion.engine.renderer
 					vm.copy(camera.matrixWorldInverse.getInverse(camera.matrixWorld));
 					vpm.multiplyMatrices(camera.projectionMatrix, vm);
 					
+					// 深度材质
+					var depthMaterial:DepthMaterial = new DepthMaterial();
+					
 					for each (var e:RenderableElement in renderElements) {
-						// TODO 增加深度图的shader
-						renderElement(e, camera, vpm);
+						renderElement(e, camera, vpm, depthMaterial);
 					}
 					
 					// 调试使用
@@ -434,15 +438,16 @@ package lion.engine.renderer
 		 * @param object
 		 * 
 		 */		
-		private function updateMaterial(object:Mesh):void
+		private function updateMaterial(object:Mesh, material:Material):void
 		{
+			var m:Material = material || object.material;
 			// 更新材质信息
-			object.material.update(s);
+			m.update(s);
 			
 			// 剔除面
-			if (object.material.side != currentSide) {
-				context.setCulling(object.material.side);
-				currentSide = object.material.side;
+			if (m.side != currentSide) {
+				context.setCulling(m.side);
+				currentSide = m.side;
 			}
 		}
 	}

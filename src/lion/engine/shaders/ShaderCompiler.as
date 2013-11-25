@@ -104,6 +104,10 @@ package lion.engine.shaders
 			compileFragmentOutput();
 		}
 		
+		/**
+		 * 编译世界位置 
+		 * 
+		 */		
 		private function compileGlobalPositionCode():void
 		{
 			_sharedRegisters.globalPositionVertex = _registerCache.getFreeVertexVectorTemp();
@@ -115,6 +119,10 @@ package lion.engine.shaders
 			_vertexCode += "m44 " + _sharedRegisters.globalPositionVertex + ", " + _sharedRegisters.localPosition + ", " + positionMatrixReg + "\n";
 		}
 		
+		/**
+		 * 编译uv坐标 
+		 * 
+		 */		
 		private function compileUVCode():void
 		{
 			var uvAttributeReg:ShaderRegisterElement = _registerCache.getFreeVertexAttribute();
@@ -394,7 +402,7 @@ package lion.engine.shaders
 			}
 			_registerCache.removeVertexTempUsage(lightDirReg);
 			_registerCache.removeVertexTempUsage(t);
-//			_registerCache.removeVertexTempUsage(ift);
+			_registerCache.removeVertexTempUsage(ift);
 		}
 		
 		private function compileProjectionCode():void

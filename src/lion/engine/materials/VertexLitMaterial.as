@@ -35,6 +35,7 @@ package lion.engine.materials
 		// 第四个元素为镜面发射的发光系数
 		public var specular:Vector4;
 		
+		// 编译器相关
 		protected var _vertexConstantData:Vector.<Number> = new Vector.<Number>();
 		protected var _fragmentConstantData:Vector.<Number> = new Vector.<Number>();
 		protected var _compiler:ShaderCompiler;
@@ -64,6 +65,11 @@ package lion.engine.materials
 			specular = new Vector4(1.0, 1.0, 1.0, 10);
 		}
 		
+		/**
+		 * 更新光照常量 
+		 * @param lights
+		 * 
+		 */		
 		protected function updateLightConstants(lights:Vector.<Light>):void {
 			var k:int = _lightVetexConstantIndex;
 			var dirPos:Vector3;
@@ -111,8 +117,14 @@ package lion.engine.materials
 			}
 		}
 		
+		/**
+		 * 更新可编程管线 
+		 * @param s
+		 * 
+		 */		
 		private function updateProgram(s:MaterialUpdateState):void
 		{
+			// 如果还未初始化
 			if (dirty) {
 				// 初始化着色器编译器
 				initCompiler(s.numDirectionalLights, s.numPointLights);
@@ -125,7 +137,7 @@ package lion.engine.materials
 				
 				
 				// 提交顶点着色器
-				if (true) {
+				if (false) {
 					trace("Compiling AGAL Code:");
 					trace("--------------------");
 					trace(_compiler.vertexCode);
@@ -142,7 +154,10 @@ package lion.engine.materials
 			s.context.setProgram(program);
 		}
 		
-		// 更新编译器输出的光照常量索引
+		/**
+		 *  更新编译器输出的光照常量索引
+		 * 
+		 */		
 		private function updateRegisterIndices():void
 		{
 			// 光照索引
@@ -235,6 +250,11 @@ package lion.engine.materials
 			s.context.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, _fragmentConstantData, _compiler.numUsedFragmentConstants);
 		}
 		
+		/**
+		 * 更新通用矩阵，比如顶点变换，法向变换，投影变换 
+		 * @param s
+		 * 
+		 */		
 		private function updateCommonMatrixes(s:MaterialUpdateState):void
 		{
 			s.matrix.copyRawDataTo(_vertexConstantData, _matrixIndex, true);
