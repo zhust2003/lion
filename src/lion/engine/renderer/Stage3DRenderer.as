@@ -139,13 +139,9 @@ package lion.engine.renderer
 			// stage3d 顺时针是正面朝向，逆时针是反面朝向，与opengl相反
 			context.setCulling(Context3DTriangleFace.NONE);
 			currentSide = Context3DTriangleFace.NONE;
-//			context.setDepthTest(true, Context3DCompareMode.LESS_EQUAL);
+			context.setDepthTest(true, Context3DCompareMode.LESS_EQUAL);
 			
 			// 设置纹理
-//			var b:BitmapData = (new t()).bitmapData;
-//			var texture:Texture = context.createTexture(b.width, b.height, Context3DTextureFormat.BGRA, false);
-//			texture.uploadFromBitmapData(b);
-//			context.setTextureAt(0, texture);
 			s.context = context;
 		}
 		
@@ -406,7 +402,9 @@ package lion.engine.renderer
 					if (l.shadowMap) {
 						l.shadowMap.dispose();
 					}
+					// 渲染纹理大小
 					l.shadowMap = new RenderTexture(1024, 1024);
+					
 					// 以这个shadowmap作为渲染目标
 					context.setRenderToTexture(l.shadowMap.getTexture(context, true), true);
 					context.clear(0, 0, 0);
@@ -424,13 +422,13 @@ package lion.engine.renderer
 					var normalMatrix:Matrix3 = new Matrix3();
 					normalMatrix.getNormalMatrix(l.matrixWorld);
 					camera.lookAt(new Vector3(0, 0, -1).applyMatrix3(normalMatrix));
-//					camera.lookAt(new Vector3(0, 0, 0));
 					camera.updateMatrixWorld();
 
 					// 以这个光作为摄像机位置
 					// 生成每个光照的shadowmap
 					var vm:Matrix4 = new Matrix4();
 					var vpm:Matrix4 = new Matrix4();
+					
 					// 新的视图投影矩阵
 					vm.copy(camera.matrixWorldInverse.getInverse(camera.matrixWorld));
 					vpm.multiplyMatrices(camera.projectionMatrix, vm);

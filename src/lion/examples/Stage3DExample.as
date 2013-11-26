@@ -43,7 +43,7 @@ package lion.examples
 	import lion.games.controls.EditorControl;
 	import lion.games.controls.FirstPersonControl;
 	
-	[SWF(frameRate="60", width="800", height="600", backgroundColor="#0")]
+	[SWF(frameRate="60", width="600", height="600", backgroundColor="#0")]
 	public class Stage3DExample extends Sprite
 	{
 		private var renderer:Stage3DRenderer;
@@ -64,13 +64,18 @@ package lion.examples
 		private var control:EditorControl;
 		
 		[Embed(source="../../test", mimeType="application/octet-stream")]
+		// 样条箱
 		private var c:Class;
 		[Embed(source="../../../assets/t.png", mimeType="image/png")]
 		private var t:Class;
 		[Embed(source="../../../assets/earth.jpg", mimeType="image/jpeg")]
 		private var e:Class;
+		
+		// 草
 		[Embed(source="../../../assets/grass.jpg", mimeType="image/jpeg")]
 		private var g:Class;
+		
+		// 经典的西洋棋盘
 		[Embed(source="../../../assets/checkerboard.jpg", mimeType="image/jpeg")]
 		private var CheckerBoard:Class;
 		private var cube2:Mesh;
@@ -122,7 +127,7 @@ package lion.examples
 //				scene.add(cube1);
 //			}
 			
-			// 创建一个面片
+			// 创建一个立方体
 			var p2:CubeGeometry = new CubeGeometry(10, 10, 10);
 			var m1:VertexLitMaterial = new VertexLitMaterial();
 			m1.texture = new BitmapTexture(b);
@@ -142,16 +147,16 @@ package lion.examples
 			sphere.position.set(0, 0, 0);
 			scene.add(sphere);
 			
-			// 创建一个面片
+			// 创建一个地面
 			var p4:PlaneGeometry = new PlaneGeometry(400, 400, 10, 10);
 			var gb:BitmapData = (new CheckerBoard()).bitmapData;
 			var m3:VertexLitMaterial = new VertexLitMaterial();
 			m3.texture = new BitmapTexture(gb);
 			m3.texture.wrap = "wrap";
 			m3.texture.repeat = new Vector2(10, 10);
+			// 双面渲染
 			m3.side = Context3DTriangleFace.NONE;
 			m3.specular = new Vector4(0, 0, 0);
-			//			m3.specular = new Vector4(0, 0, 0, 0);
 			
 			plane = new Mesh(p4, m3);
 			plane.receiveShadow = true;

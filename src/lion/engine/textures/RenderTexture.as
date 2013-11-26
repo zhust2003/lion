@@ -16,15 +16,5 @@ package lion.engine.textures
 			super(width, height);
 		}
 		
-//		/**
-//		 * 提交到GPU 
-//		 * @param texture
-//		 * 
-//		 */		
-//		override protected function uploadContent(texture:TextureBase):void {
-//			var bmp:BitmapData = new BitmapData(_width, _height, false, 0xff0000);
-//			MipmapGenerator.generateMipMaps(bmp, texture);
-//			bmp.dispose();
-//		}
 	}
 }

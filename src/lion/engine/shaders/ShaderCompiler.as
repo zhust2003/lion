@@ -518,7 +518,7 @@ package lion.engine.shaders
 											  inputReg:ShaderRegisterElement, 
 											  texture:BaseTexture, 
 											  uvReg:ShaderRegisterElement = null, 
-											  useSmoothTextures:Boolean = false):String
+											  useSmoothTextures:Boolean = true):String
 		{
 			var wrap:String = texture.wrap;
 			var filter:String;
