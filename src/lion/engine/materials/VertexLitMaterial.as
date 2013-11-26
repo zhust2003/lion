@@ -138,7 +138,7 @@ package lion.engine.materials
 				
 				
 				// 提交顶点着色器
-				if (true) {
+				if (false) {
 					trace("Compiling AGAL Code:");
 					trace("--------------------");
 					trace(_compiler.vertexCode);
@@ -207,12 +207,23 @@ package lion.engine.materials
 			// TODO 判断是否需要更新程序
 			updateProgram(s);
 			
+			var index:int;
+			
 			// 如果有纹理的话，绑定纹理
 			if (texture) {
 				var t:TextureBase = texture.getTexture(s.context);
 				s.context.setTextureAt(_texturesIndex, t);
 				// 设定va uv
 				s.renderElement.setUVBuffer(_uvBufferIndex);
+				
+				// 设定offset repeat
+				index = _compiler.uvTransformIndex;
+				if (index != -1) {
+					_vertexConstantData[index] = texture.offset.x;
+					_vertexConstantData[index + 1] = texture.offset.y;
+					_vertexConstantData[index + 2] = texture.repeat.x;
+					_vertexConstantData[index + 3] = texture.repeat.y;
+				}
 			}
 			
 			// 设定va normal
@@ -235,13 +246,14 @@ package lion.engine.materials
 				
 				s.depthViewProjectionMatrix.copyRawDataTo(_vertexConstantData, _compiler.depthMapProjIndex, true);
 				
-				var index:Object = _compiler.depthMapConstantsIndex;
+				index = _compiler.depthMapConstantsIndex;
 				if (index != -1) {
 					_vertexConstantData[index] = .5;
 					_vertexConstantData[index + 1] = -.5;
 					_vertexConstantData[index + 2] = 0.0;
 					_vertexConstantData[index + 3] = 1.0;
 				}
+				
 				index = _compiler.depthMapFragmentIndex;
 				
 				// 误差值 _epsilon

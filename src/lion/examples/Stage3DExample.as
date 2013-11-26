@@ -1,7 +1,9 @@
 package lion.examples
 {
 	import flash.display.BitmapData;
+	import flash.display.Graphics;
 	import flash.display.Sprite;
+	import flash.display.StageDisplayState;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
@@ -31,6 +33,7 @@ package lion.examples
 	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.MathUtil;
 	import lion.engine.math.Matrix3;
+	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 	import lion.engine.math.Vector4;
 	import lion.engine.renderer.SoftRenderer;
@@ -40,7 +43,7 @@ package lion.examples
 	import lion.games.controls.EditorControl;
 	import lion.games.controls.FirstPersonControl;
 	
-	[SWF(frameRate="60", width="600", height="600", backgroundColor="#0")]
+	[SWF(frameRate="60", width="800", height="600", backgroundColor="#0")]
 	public class Stage3DExample extends Sprite
 	{
 		private var renderer:Stage3DRenderer;
@@ -68,6 +71,8 @@ package lion.examples
 		private var e:Class;
 		[Embed(source="../../../assets/grass.jpg", mimeType="image/jpeg")]
 		private var g:Class;
+		[Embed(source="../../../assets/checkerboard.jpg", mimeType="image/jpeg")]
+		private var CheckerBoard:Class;
 		private var cube2:Mesh;
 		private var light:DirectionalLight;
 		private var light2:PointLight;
@@ -76,6 +81,7 @@ package lion.examples
 		private var fpsCount:int = 0;
 		private var fpsAvg:int = 0;
 		private var fps:int;
+		private var button:Sprite;
 		
 		public function Stage3DExample()
 		{
@@ -138,9 +144,11 @@ package lion.examples
 			
 			// 创建一个面片
 			var p4:PlaneGeometry = new PlaneGeometry(400, 400, 10, 10);
-			var gb:BitmapData = (new g()).bitmapData;
+			var gb:BitmapData = (new CheckerBoard()).bitmapData;
 			var m3:VertexLitMaterial = new VertexLitMaterial();
 			m3.texture = new BitmapTexture(gb);
+			m3.texture.wrap = "wrap";
+			m3.texture.repeat = new Vector2(10, 10);
 			m3.side = Context3DTriangleFace.NONE;
 			m3.specular = new Vector4(0, 0, 0);
 			//			m3.specular = new Vector4(0, 0, 0, 0);
@@ -152,7 +160,7 @@ package lion.examples
 			scene.add(plane);
 			
 			// 创建一个摄像机
-			camera = new PerspectiveCamera(60, 1);
+			camera = new PerspectiveCamera(75, 1);
 //			camera = new OrthographicCamera(-50, 50, 50, -50, 0.1, 30000);
 			camera.position.set(0, 40, 60);
 			center = new Vector3(0, 0, 0);
@@ -165,6 +173,7 @@ package lion.examples
 			light.position.set(- 40, 80, 20);
 			light.position.x = 40 * MathUtil.cosd(angle);
 			light.position.z = 40 * MathUtil.sind(angle);
+			light.lookAt(new Vector3(0, 0, 0));
 			scene.add(light);
 			
 //			// 光源位置
@@ -209,6 +218,56 @@ package lion.examples
 			addEventListener(Event.ENTER_FRAME, update);
 			
 			setInterval(onUpdateProfile, 1000);
+			setupFullScreenButton();
+		}
+		
+		private function setupFullScreenButton():void
+		{
+			button = new Sprite();
+			var g:Graphics =    button.graphics;
+			
+			var clrBlack:uint = 0x000000;
+			var clrWhite:uint = 0xffffff;
+			
+			var coordinates:Array = [
+				[clrBlack, 0, 0, 30, 30],
+				[clrWhite, 5, 5, 20, 20],
+				[clrBlack, 7, 7, 16, 16],
+				[clrBlack, 0, 10, 30, 10],
+				[clrBlack, 10, 0, 10, 30]
+			];
+			
+			for (var c:int; c < coordinates.length; c++) {
+				var command:Array = coordinates[c];
+				g.beginFill(command[0]);
+				g.drawRoundRect(command[1], command[2], command[3], command[4], 6, 6);
+				g.endFill();
+			}
+			
+			button.useHandCursor = true;
+			button.buttonMode = true;
+			button.addEventListener(MouseEvent.CLICK, onToggleFullScreen);
+			
+			addChild(button);
+			
+			button.x = stage.stageWidth - button.width;
+			button.y = stage.stageHeight - button.height;
+			stage.addEventListener(Event.RESIZE, onResize);
+		}
+		
+		protected function onResize(event:Event):void
+		{
+			trace('reconfig button x y', stage.stageWidth, stage.stageHeight);
+			button.x = stage.stageWidth - button.width;
+			button.y = stage.stageHeight - button.height;
+		}
+		
+		public function onToggleFullScreen(e:Event=null):void {
+			if (stage.displayState !== StageDisplayState.NORMAL) {
+				stage.displayState = StageDisplayState.NORMAL;
+			} else {
+				stage.displayState = StageDisplayState.FULL_SCREEN;
+			}
 		}
 		
 		private function onUpdateProfile():void
@@ -232,6 +291,7 @@ package lion.examples
 			angle += 1;
 			light.position.x = 40 * MathUtil.cosd(angle);
 			light.position.z = 40 * MathUtil.sind(angle);
+			light.lookAt(new Vector3(0, 0, 0));
 			
 			var nowTime:int = getTimer();
 			var time:Number = nowTime - lastTime;

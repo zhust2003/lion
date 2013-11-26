@@ -6,6 +6,8 @@ package lion.engine.renderer
 	import flash.display.BitmapData;
 	import flash.display.Stage;
 	import flash.display.Stage3D;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
 	import flash.display3D.Context3D;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DCompareMode;
@@ -84,7 +86,7 @@ package lion.engine.renderer
 				this.stage3D = this.stage.stage3Ds[0];
 				stage3D.addEventListener(Event.CONTEXT3D_CREATE, onCreate);
 				stage3D.addEventListener(ErrorEvent.ERROR, onError);
-				
+
 				var requestContext3D:Function = stage3D.requestContext3D;
 				if (requestContext3D.length == 1) requestContext3D(renderMode);
 				else requestContext3D(renderMode, profile);
@@ -113,10 +115,19 @@ package lion.engine.renderer
 		}
 		
 		protected function init():void {
+			stage.align = StageAlign.TOP_LEFT;
+			stage.scaleMode = StageScaleMode.NO_SCALE;
 			context = stage3D.context3D;
 			trace("Display Driver:", context.driverInfo);
 			
 			configContext3D();
+			stage.addEventListener(Event.RESIZE, onResize);
+		}
+		
+		protected function onResize(event:Event):void
+		{
+			trace('reconfig context3d', stage.stageWidth, stage.stageHeight);
+			context.configureBackBuffer(stage.stageWidth, stage.stageHeight, 2, true);
 		}
 		
 		private function configContext3D():void

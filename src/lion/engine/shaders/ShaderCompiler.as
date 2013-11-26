@@ -56,6 +56,9 @@ package lion.engine.shaders
 		// 纹理索引
 		public var texturesIndex:int;
 		
+		// uv变换索引，offset and repeat
+		public var uvTransformIndex:int;
+		
 		// 阴影相关
 		public var depthMapConstantsIndex:int;
 		public var depthMapProjIndex:int;
@@ -179,7 +182,16 @@ package lion.engine.shaders
 			var varying:ShaderRegisterElement = _registerCache.getFreeVarying();
 			_sharedRegisters.uvVarying = varying;
 			
-			_vertexCode += "mov " + _sharedRegisters.uvVarying + ", " + uvAttributeReg + "\n";
+			var uvTransformConst:ShaderRegisterElement = _registerCache.getFreeVertexConstant();
+			var temp:ShaderRegisterElement = _registerCache.getFreeVertexVectorTemp();
+			uvTransformIndex = uvTransformConst.index * 4;
+			
+			// 加上uv offset和乘于repeat
+			_vertexCode += "mul " + temp + ", " + uvAttributeReg + ", " + uvTransformConst + ".zw\n";
+			_vertexCode += "add " + temp + ", " + temp + ", " + uvTransformConst + ".xy\n";
+			_vertexCode += "mov " + _sharedRegisters.uvVarying + ", " + temp + "\n";
+			
+			_registerCache.removeVertexTempUsage(temp);
 		}
 		
 		public function get numUsedVertexConstants():uint
@@ -506,10 +518,9 @@ package lion.engine.shaders
 											  inputReg:ShaderRegisterElement, 
 											  texture:BaseTexture, 
 											  uvReg:ShaderRegisterElement = null, 
-											  forceWrap:String = null, 
 											  useSmoothTextures:Boolean = false):String
 		{
-			var wrap:String = forceWrap ? "wrap" : "clamp";
+			var wrap:String = texture.wrap;
 			var filter:String;
 			var format:String = "";
 			var enableMipMaps:Boolean = texture.generateMipmaps;
