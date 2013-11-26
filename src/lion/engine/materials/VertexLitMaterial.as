@@ -56,6 +56,7 @@ package lion.engine.materials
 		private var _specularVertexConstantsIndex:int;
 		private var _commonVertexConstansIndex:int;
 		private var _texturesIndex:int;
+		private var shadowMapping:Boolean;
 		
 		public function VertexLitMaterial()
 		{
@@ -137,7 +138,7 @@ package lion.engine.materials
 				
 				
 				// 提交顶点着色器
-				if (false) {
+				if (true) {
 					trace("Compiling AGAL Code:");
 					trace("--------------------");
 					trace(_compiler.vertexCode);
@@ -195,10 +196,14 @@ package lion.engine.materials
 			_compiler = new ShaderCompiler();
 			_compiler.numDirectionalLights = numDirectionalLights;
 			_compiler.numPointLights = numPointLights;
-			_compiler.compile(texture);
+			_compiler.compile(texture, shadowMapping);
 		}
 		
 		override public function update(s:MaterialUpdateState):void {
+			if (s.renderElement.object.receiveShadow) {
+				shadowMapping = true;
+			}
+			
 			// TODO 判断是否需要更新程序
 			updateProgram(s);
 			
@@ -209,8 +214,11 @@ package lion.engine.materials
 				// 设定va uv
 				s.renderElement.setUVBuffer(_uvBufferIndex);
 			}
+			
 			// 设定va normal
 			s.renderElement.setNormalBuffer(_normalBufferIndex);
+			
+			
 			
 			// 主要的问题就是，怎么通过动态的光源计算出动态的着色器程序
 			// 另外也计算出需要传入GPU的一些数据
@@ -219,6 +227,30 @@ package lion.engine.materials
 			// 编译器只需要光源数量，即可拼接处光照的着色器代码
 			// 另外通过编译器编译后输出的一些信息，比如光源偏移量等等，输出到外面给当前材质获取
 			// 当前材质知道偏移量后，设定常量值
+			
+			// 如果接收阴影
+			if (shadowMapping) {
+				var t1:TextureBase = s.depthTexture.getTexture(s.context);
+				s.context.setTextureAt(_compiler.depthMapTexturesIndex, t1);
+				
+				s.depthViewProjectionMatrix.copyRawDataTo(_vertexConstantData, _compiler.depthMapProjIndex, true);
+				
+				var index:Object = _compiler.depthMapConstantsIndex;
+				if (index != -1) {
+					_vertexConstantData[index] = .5;
+					_vertexConstantData[index + 1] = -.5;
+					_vertexConstantData[index + 2] = 0.0;
+					_vertexConstantData[index + 3] = 1.0;
+				}
+				index = _compiler.depthMapFragmentIndex;
+				
+				// 误差值 _epsilon
+				_fragmentConstantData[index] = .01;
+				_fragmentConstantData[index + 1] = 0.0;
+				_fragmentConstantData[index + 2] = 0.0;
+				_fragmentConstantData[index + 3] = 0.0;
+				
+			}
 			
 			// 摄像机位置
 			var k:int = _cameraPositionIndex;

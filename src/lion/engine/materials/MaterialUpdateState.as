@@ -6,6 +6,7 @@ package lion.engine.materials
 	import lion.engine.lights.Light;
 	import lion.engine.math.Vector3;
 	import lion.engine.renderer.base.RenderableElement;
+	import lion.engine.textures.BaseTexture;
 
 	public class MaterialUpdateState
 	{
@@ -19,6 +20,8 @@ package lion.engine.materials
 		public var viewProjectionMatrix:Matrix3D;
 		public var cameraPosition:Vector3;
 		public var renderElement:RenderableElement;
+		public var depthViewProjectionMatrix:Matrix3D;
+		public var depthTexture:BaseTexture;
 		
 		public function MaterialUpdateState()
 		{

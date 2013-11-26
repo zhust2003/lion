@@ -23,12 +23,12 @@ package lion.engine.shaders
 		private var _pointLightRegisters:Vector.<ShaderRegisterElement>;
 		private var _dirLightRegisters:Vector.<ShaderRegisterElement>;
 		
-		// 输入
+		// ========== 输入 ==========
 		// 光源数量
 		public var numDirectionalLights:int;
 		public var numPointLights:int;
 		
-		// 输出
+		// ========== 输出 ==========
 		// 光源索引
 		// 光源位置，光源颜色等
 		public var lightVetexConstantIndex:int;
@@ -56,6 +56,12 @@ package lion.engine.shaders
 		// 纹理索引
 		public var texturesIndex:int;
 		
+		// 阴影相关
+		public var depthMapConstantsIndex:int;
+		public var depthMapProjIndex:int;
+		public var depthMapTexturesIndex:int;
+		public var depthMapFragmentIndex:int;
+		
 		
 		private var diffuseInputRegister:ShaderRegisterElement;
 		private var specularInputRegister:ShaderRegisterElement;
@@ -63,6 +69,8 @@ package lion.engine.shaders
 		private var totalLightColor:ShaderRegisterElement;
 		private var commonInputRegister:ShaderRegisterElement;
 		private var _texture:BaseTexture;
+		private var depthMapUVRegister:ShaderRegisterElement;
+		private var _shadowMapping:Boolean;
 		
 		public function ShaderCompiler()
 		{
@@ -81,7 +89,7 @@ package lion.engine.shaders
 			return _vertexCode;
 		}
 
-		public function compile(texture:BaseTexture):void {
+		public function compile(texture:BaseTexture, shadowMapping:Boolean):void {
 			// 编译的最终目的就是生成顶点着色器代码以及片段着色器代码
 			_vertexCode = "";
 			_fragmentCode = "";
@@ -90,7 +98,11 @@ package lion.engine.shaders
 			_sharedRegisters.localPosition = _registerCache.getFreeVertexAttribute();
 			_sharedRegisters.targetLightColor = _registerCache.getFreeVarying();
 			
+			// ====== 顶点着色器 ======
+			
+			// 计算全局位置
 			compileGlobalPositionCode();
+			// 计算投影
 			compileProjectionCode();
 			
 			_texture = texture;
@@ -99,9 +111,44 @@ package lion.engine.shaders
 			}
 			compileNormalCode();
 			compileViewDirCode();
+			
+			// 计算光照
 			compileLightingCode();
 			
+			// 如果有需要阴影贴图
+			_shadowMapping = shadowMapping;
+			if (_shadowMapping) {
+				compileDepthMapUV();
+			}
+			
+			// ====== 片段着色器 ======
+			
 			compileFragmentOutput();
+		}
+		
+		private function compileDepthMapUV():void
+		{
+			var temp:ShaderRegisterElement = _registerCache.getFreeVertexVectorTemp();
+			var dataReg:ShaderRegisterElement = _registerCache.getFreeVertexConstant();
+			var depthMapProj:ShaderRegisterElement = _registerCache.getFreeVertexConstant();
+			_registerCache.getFreeVertexConstant();
+			_registerCache.getFreeVertexConstant();
+			_registerCache.getFreeVertexConstant();
+			depthMapUVRegister = _registerCache.getFreeVarying();
+			// * 0.5 + 0.5的常量（uv跟视图位置不同）
+			// http://www.web-tinker.com/article/20179.html
+			depthMapConstantsIndex = dataReg.index * 4;
+			// 以光源为位置的视图投影矩阵
+			depthMapProjIndex = depthMapProj.index * 4;
+			
+			_vertexCode += "m44 " + temp + ", " + _sharedRegisters.globalPositionVertex + ", " + depthMapProj + "\n" +
+				// 齐次化w = 1
+				"div " + temp + ", " + temp + ", " + temp + ".w \n" +
+				// 位置转uv *0.5 + 0.5
+				"mul " + temp + ".xy, " + temp + ".xy, " + dataReg + ".xy \n" +
+				"add " + depthMapUVRegister + ", " + temp + ", " + dataReg + ".xxzz\n";
+			
+			_registerCache.removeVertexTempUsage(temp);
 		}
 		
 		/**
@@ -405,6 +452,10 @@ package lion.engine.shaders
 			_registerCache.removeVertexTempUsage(ift);
 		}
 		
+		/**
+		 * 编译投影代码 
+		 * 
+		 */		
 		private function compileProjectionCode():void
 		{
 			var viewProjectionReg:ShaderRegisterElement = _registerCache.getFreeVertexConstant();
@@ -413,7 +464,6 @@ package lion.engine.shaders
 			_registerCache.getFreeVertexConstant();
 			 viewProjectionMatrixIndex = viewProjectionReg.index * 4;
 			 var tmp:ShaderRegisterElement = _registerCache.getFreeVertexVectorTemp();
-			 
 			 
 			_vertexCode +=  "m44 " + tmp + ", " + _sharedRegisters.globalPositionVertex + ", " + viewProjectionReg + "\n" +
 							"mov op, " + tmp + " \n";
@@ -430,6 +480,22 @@ package lion.engine.shaders
 								 "mul " + albedo + ".xyz, " + albedo + ", " + _sharedRegisters.targetLightColor + "\n";
 			} else {
 				_fragmentCode += "mov " + albedo + ", " + _sharedRegisters.targetLightColor + "\n";
+			}
+			
+			// 阴影贴图
+			if (_shadowMapping) {
+				var depthColor:ShaderRegisterElement = _registerCache.getFreeFragmentVectorTemp();
+				var depthMapRegister:ShaderRegisterElement = _registerCache.getFreeTextureReg();
+				depthMapTexturesIndex = depthMapRegister.index;
+				var depthMapFragmentConst:ShaderRegisterElement = _registerCache.getFreeFragmentConstant();
+				depthMapFragmentIndex = depthMapFragmentConst.index * 4;
+				
+				_fragmentCode += "tex " + depthColor + ", " + depthMapUVRegister + ", " + depthMapRegister + " <2d, nearest, clamp>\n" +
+								// 增加点误差容错
+								"add " + depthColor + ".z, " + depthColor + ".z, " + depthMapFragmentConst + ".x \n" +
+								// 如果depthMapUVRegister.z比较大，即depthMapUVRegister.z > depthCol.z，说明被遮挡
+								"slt " + albedo + ".w, " + depthMapUVRegister + ".z, " + depthColor + ".z\n" +
+								"mul " + albedo + ", " + albedo + ".xyz, " + albedo + ".www \n";
 			}
 			
 			_fragmentCode += "mov " + _registerCache.fragmentOutputRegister + ", " + albedo + " \n";

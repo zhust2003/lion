@@ -72,6 +72,8 @@ package lion.engine.renderer
 		private var currentSide:String;
 		
 		private var s:MaterialUpdateState;
+		private var _depthViewProjectionMatrix:Matrix4;
+		private var _depthShadowMap:RenderTexture;
 		
 		public function Stage3DRenderer(stage:Stage, renderMode:String="auto", profile:String="baselineConstrained")
 		{
@@ -228,7 +230,7 @@ package lion.engine.renderer
 			s.lights = lights;
 			
 			// 对物体进行排序
-			renderList.sort(painterSortByObject);
+//			renderList.sort(painterSortByObject);
 			
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
 			renderElements.length = 0;
@@ -315,7 +317,7 @@ package lion.engine.renderer
 //			if (pool.length <= 0) return;
 			
 			// 对基本渲染元素进行排序
-			renderElements.sort(painterSort);
+//			renderElements.sort(painterSort);
 			
 			
 			drawCount = 0;
@@ -362,6 +364,9 @@ package lion.engine.renderer
 			// 渲染元素
 			s.renderElement = e;
 			
+			s.depthViewProjectionMatrix = _depthViewProjectionMatrix.toMatrix3D();
+			s.depthTexture = _depthShadowMap;
+			
 			// 设置渲染程序（顶点，片段）
 			updateMaterial(e.object as Mesh, material);
 			
@@ -386,8 +391,11 @@ package lion.engine.renderer
 		{
 			// 遍历每个需要产生阴影的光照
 			for each (var l:Light in lights) {
-				if (l.castShadow && ! l.shadowMap) {
-					l.shadowMap = new RenderTexture(512, 512);
+				if (l.castShadow) {
+					if (l.shadowMap) {
+						l.shadowMap.dispose();
+					}
+					l.shadowMap = new RenderTexture(1024, 1024);
 					// 以这个shadowmap作为渲染目标
 					context.setRenderToTexture(l.shadowMap.getTexture(context, true), true);
 					context.clear(0, 0, 0);
@@ -416,19 +424,25 @@ package lion.engine.renderer
 					vm.copy(camera.matrixWorldInverse.getInverse(camera.matrixWorld));
 					vpm.multiplyMatrices(camera.projectionMatrix, vm);
 					
+					_depthViewProjectionMatrix = vpm;
+					_depthShadowMap = l.shadowMap;
+					
 					// 深度材质
 					var depthMaterial:DepthMaterial = new DepthMaterial();
 					
+					// 渲染所有
 					for each (var e:RenderableElement in renderElements) {
 						renderElement(e, camera, vpm, depthMaterial);
 					}
 					
 					// 调试使用
-					for each (var e:RenderableElement in renderElements) {
-						if (Mesh(e.object).geometry is PlaneGeometry) {
-							Mesh(e.object).material.texture = l.shadowMap;
-						}
-					}
+//					for each (var e:RenderableElement in renderElements) {
+//						if (Mesh(e.object).geometry is PlaneGeometry) {
+//							Mesh(e.object).material.texture = l.shadowMap;
+//						}
+//					}
+					// 只支持一个
+					break;
 				}
 			}
 		}

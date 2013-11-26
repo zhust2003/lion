@@ -142,9 +142,11 @@ package lion.examples
 			var m3:VertexLitMaterial = new VertexLitMaterial();
 			m3.texture = new BitmapTexture(gb);
 			m3.side = Context3DTriangleFace.NONE;
+			m3.specular = new Vector4(0, 0, 0);
 			//			m3.specular = new Vector4(0, 0, 0, 0);
 			
 			plane = new Mesh(p4, m3);
+			plane.receiveShadow = true;
 			plane.position.set(0, -20, 0);
 			plane.rotation.x = -1.57;
 			scene.add(plane);
@@ -160,7 +162,9 @@ package lion.examples
 			// 创建一个光线
 			light = new DirectionalLight(0xFFFFFF, 1.5);
 			light.castShadow = true;
-			light.position.set(camera.position.x - 40, camera.position.y + 40, camera.position.z - 40);
+			light.position.set(- 40, 80, 20);
+			light.position.x = 40 * MathUtil.cosd(angle);
+			light.position.z = 40 * MathUtil.sind(angle);
 			scene.add(light);
 			
 //			// 光源位置
@@ -223,6 +227,11 @@ package lion.examples
 //			camera.updateProjectionMatrix();
 			cube.rotation.y += 0.01;
 			sphere.rotation.y -= 0.01;
+			
+			// 让光照沿着y轴旋转
+			angle += 1;
+			light.position.x = 40 * MathUtil.cosd(angle);
+			light.position.z = 40 * MathUtil.sind(angle);
 			
 			var nowTime:int = getTimer();
 			var time:Number = nowTime - lastTime;
