@@ -16,5 +16,6 @@ package lion.engine.core
 			var g:PlaneGeometry = new PlaneGeometry(width, height);
 			super(g, m);
 		}
+		
 	}
 }

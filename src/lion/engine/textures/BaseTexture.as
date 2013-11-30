@@ -10,7 +10,7 @@ package lion.engine.textures
 
 	public class BaseTexture
 	{
-		protected var textureBase:Texture;
+		protected var textureBase:TextureBase;
 		public var generateMipmaps:Boolean;
 		protected var _width:Number;
 		protected var _height:Number;
@@ -28,7 +28,7 @@ package lion.engine.textures
 			wrap = "clamp";
 		}
 		
-		public function getTexture(context3D:Context3D, o:Boolean = false):Texture {
+		public function getTexture(context3D:Context3D, o:Boolean = false):TextureBase {
 			// 创建纹理对象
 			if (! textureBase) {
 				textureBase = context3D.createTexture(_width, _height, Context3DTextureFormat.BGRA, o);
@@ -38,7 +38,7 @@ package lion.engine.textures
 			return textureBase;
 		}
 		
-		protected function uploadContent(texture:Texture):void {
+		protected function uploadContent(texture:TextureBase):void {
 		}
 		
 		public function dispose():void {

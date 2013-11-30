@@ -24,7 +24,7 @@ package lion.engine.textures
 		 * @param texture
 		 * 
 		 */		
-		override protected function uploadContent(texture:Texture):void {
+		override protected function uploadContent(texture:TextureBase):void {
 			if (generateMipmaps) {
 				MipmapGenerator.generateMipMaps(bitmapData, texture, mipMapHolder, true);
 			} else {

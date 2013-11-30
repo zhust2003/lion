@@ -161,6 +161,60 @@ package lion.engine.math
 			return this;
 		}
 		
+		/**
+		 * 从矩阵中解出位置、旋转、缩放 
+		 * @param position
+		 * @param quaternion
+		 * @param scale
+		 * @return 
+		 * 
+		 */		
+		public function decompose(position:Vector3, quaternion:Quaternion, scale:Vector3):Matrix4 {
+			var vector:Vector3 = new Vector3();
+			var matrix:Matrix4 = new Matrix4();
+			
+			var te:Vector.<Number> = this.elements;
+			
+			var sx:Number = vector.set(te[0], te[4], te[8]).length;
+			var sy:Number = vector.set(te[1], te[5], te[9]).length;
+			var sz:Number = vector.set(te[2], te[6], te[10]).length;
+			
+			position.x = te[3];
+			position.y = te[7];
+			position.z = te[11];
+			
+			// scale the rotation part
+			var me:Vector.<Number> = this.elements;
+			matrix.set(me[0], me[1], me[2], me[3],
+						me[4], me[5], me[6], me[7],
+						me[8], me[9], me[10], me[11],
+						me[12], me[13], me[14], me[15]); // at this point matrix is incomplete so we can't use .copy()
+			
+			var invSX:Number = 1 / sx;
+			var invSY:Number = 1 / sy;
+			var invSZ:Number = 1 / sz;
+			
+			matrix.elements[0] *= invSX;
+			matrix.elements[4] *= invSX;
+			matrix.elements[8] *= invSX;
+			
+			matrix.elements[1] *= invSY;
+			matrix.elements[5] *= invSY;
+			matrix.elements[9] *= invSY;
+			
+			matrix.elements[2] *= invSZ;
+			matrix.elements[6] *= invSZ;
+			matrix.elements[10] *= invSZ;
+			
+			quaternion.setFromRotationMatrix(matrix);
+			
+			scale.x = sx;
+			scale.y = sy;
+			scale.z = sz;
+			
+			return this;
+		}
+		
 		private function makeScale(v:Vector3):Matrix4 {
 			var te:Vector.<Number> = this.elements;
 			var x:Number = v.x, y:Number = v.y, z:Number = v.z;

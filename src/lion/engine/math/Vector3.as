@@ -173,10 +173,6 @@ package lion.engine.math
 			return new Vector3(x, y, z);
 		}
 		
-		public function toString():String {
-			return "[Vector3 (x:" + x + ", y:" + y + ", z:" + z + ")]";
-		}
-		
 		public function applyMatrix3(m:Matrix3):Vector3
 		{
 			var x:Number = this.x;
@@ -195,6 +191,10 @@ package lion.engine.math
 		public function negate():Vector3
 		{
 			return this.multiply(-1);
+		}
+		
+		public function toString():String {
+			return "[Vector3 (x:" + x + ", y:" + y + ", z:" + z + ")]";
 		}
 	}
 }

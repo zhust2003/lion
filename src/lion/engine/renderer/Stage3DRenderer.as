@@ -33,6 +33,7 @@ package lion.engine.renderer
 	import lion.engine.core.Mesh;
 	import lion.engine.core.Object3D;
 	import lion.engine.core.Scene;
+	import lion.engine.core.SkyBox;
 	import lion.engine.core.Surface;
 	import lion.engine.geometries.Geometry;
 	import lion.engine.geometries.PlaneGeometry;
@@ -331,6 +332,7 @@ package lion.engine.renderer
 			
 			
 			// pre render
+			
 			// 更新光照阴影图
 			updateLightShadow();
 			
@@ -371,13 +373,27 @@ package lion.engine.renderer
 			// 渲染元素
 			s.renderElement = e;
 			
+			// 阴影相关
 			s.depthViewProjectionMatrix = _depthViewProjectionMatrix.toMatrix3D();
 			s.depthTexture = _depthShadowMap;
 			
-			// 设置渲染程序（顶点，片段）
-			updateMaterial(e.object as Mesh, material);
+			// 设置渲染程序（顶点，片段）			
+			var m:Material = material || (e.object as Mesh).material;
+			
+			m.activate(s.context);
+			
+			// 更新材质信息
+			m.update(s);
+			
+			// 剔除面
+			if (m.side != currentSide) {
+				context.setCulling(m.side);
+				currentSide = m.side;
+			}
 			
 			e.render();
+			
+			m.deactivate(s.context);
 			
 			drawCount++;
 			
@@ -441,7 +457,9 @@ package lion.engine.renderer
 					
 					// 渲染所有
 					for each (var e:RenderableElement in renderElements) {
-						renderElement(e, camera, vpm, depthMaterial);
+						if (! (e.object is SkyBox)) {
+							renderElement(e, camera, vpm, depthMaterial);
+						}
 					}
 					
 					// 调试使用
@@ -453,24 +471,6 @@ package lion.engine.renderer
 					// 只支持一个
 					break;
 				}
-			}
-		}
-		
-		/**
-		 * 更新材质 
-		 * @param object
-		 * 
-		 */		
-		private function updateMaterial(object:Mesh, material:Material):void
-		{
-			var m:Material = material || object.material;
-			// 更新材质信息
-			m.update(s);
-			
-			// 剔除面
-			if (m.side != currentSide) {
-				context.setCulling(m.side);
-				currentSide = m.side;
 			}
 		}
 	}

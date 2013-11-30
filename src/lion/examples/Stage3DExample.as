@@ -1,5 +1,6 @@
 package lion.examples
 {
+	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Graphics;
 	import flash.display.Sprite;
@@ -22,6 +23,8 @@ package lion.examples
 	import lion.engine.cameras.PerspectiveCamera;
 	import lion.engine.core.Mesh;
 	import lion.engine.core.Scene;
+	import lion.engine.core.SkyBox;
+	import lion.engine.core.Sprite3D;
 	import lion.engine.geometries.CubeGeometry;
 	import lion.engine.geometries.PlaneGeometry;
 	import lion.engine.geometries.SphereGeometry;
@@ -39,6 +42,7 @@ package lion.examples
 	import lion.engine.renderer.SoftRenderer;
 	import lion.engine.renderer.Stage3DRenderer;
 	import lion.engine.textures.BitmapTexture;
+	import lion.engine.textures.CubeBitmapTexture;
 	import lion.engine.utils.InputManager;
 	import lion.games.controls.EditorControl;
 	import lion.games.controls.FirstPersonControl;
@@ -78,6 +82,21 @@ package lion.examples
 		// 经典的西洋棋盘
 		[Embed(source="../../../assets/checkerboard.jpg", mimeType="image/jpeg")]
 		private var CheckerBoard:Class;
+		
+		// Environment map.
+		[Embed(source="../../../assets/skybox/snow_positive_x.jpg")]
+		private var EnvPosX:Class;
+		[Embed(source="../../../assets/skybox/snow_positive_y.jpg")]
+		private var EnvPosY:Class;
+		[Embed(source="../../../assets/skybox/snow_positive_z.jpg")]
+		private var EnvPosZ:Class;
+		[Embed(source="../../../assets/skybox/snow_negative_x.jpg")]
+		private var EnvNegX:Class;
+		[Embed(source="../../../assets/skybox/snow_negative_y.jpg")]
+		private var EnvNegY:Class;
+		[Embed(source="../../../assets/skybox/snow_negative_z.jpg")]
+		private var EnvNegZ:Class;
+		
 		private var cube2:Mesh;
 		private var light:DirectionalLight;
 		private var light2:PointLight;
@@ -136,6 +155,14 @@ package lion.examples
 			cube2.position.set(0, 20, 0);
 			scene.add(cube2);
 			
+			// 创建一个公告牌
+			var m1:VertexLitMaterial = new VertexLitMaterial();
+			m1.texture = new BitmapTexture(b);
+			m1.side = Context3DTriangleFace.NONE;
+			var sprite3D:Sprite3D = new Sprite3D(m1, 10, 10);
+			sprite3D.position.set(20, 0, 0);
+			scene.add(sprite3D);
+			
 			// 创建一个圆
 			var p3:SphereGeometry = new SphereGeometry(10, 32, 32);
 			var eb:BitmapData = (new e()).bitmapData;
@@ -180,6 +207,16 @@ package lion.examples
 			light.position.z = 40 * MathUtil.sind(angle);
 			light.lookAt(new Vector3(0, 0, 0));
 			scene.add(light);
+			
+			// 天空体
+			var t:CubeBitmapTexture = new CubeBitmapTexture(toBitmapData(EnvPosX), 
+												toBitmapData(EnvNegX), 
+												toBitmapData(EnvPosY), 
+												toBitmapData(EnvNegY), 
+												toBitmapData(EnvPosZ), 
+												toBitmapData(EnvNegZ));
+			var skybox:SkyBox = new SkyBox(t);
+			scene.add(skybox);
 			
 //			// 光源位置
 //			camera = new OrthographicCamera(-50, 50, 50, -50, 0.1, 30000);
@@ -312,6 +349,30 @@ package lion.examples
 			renderer.render(scene, camera, viewport);
 			
 			lastTime = nowTime;
+		}
+		
+		public function toBitmapData(data:*):BitmapData
+		{
+			if (data == null)
+				return null;
+			
+			if (data is Class) {
+				try {
+					data = new data;
+				} catch (bitmapError:ArgumentError) {
+					data = new data(0, 0);
+				}
+			}
+			
+			if (data is BitmapData)
+				return data;
+			
+			if (data is Bitmap) {
+				if ((data as Bitmap).hasOwnProperty("bitmapData")) // if (data is BitmapAsset)
+					return (data as Bitmap).bitmapData;
+			}
+			
+			return null;
 		}
 	}
 }

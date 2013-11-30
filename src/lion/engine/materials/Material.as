@@ -2,6 +2,7 @@ package lion.engine.materials
 {
 	import com.adobe.utils.AGALMiniAssembler;
 	
+	import flash.display3D.Context3D;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DCompareMode;
 	import flash.display3D.Context3DTriangleFace;
@@ -48,7 +49,7 @@ package lion.engine.materials
 			side = Context3DTriangleFace.FRONT;
 		}
 		
-		public function activate():void {
+		public function activate(context:Context3D):void {
 		
 		}
 		
@@ -56,7 +57,7 @@ package lion.engine.materials
 		
 		}
 		
-		public function deactivate():void {
+		public function deactivate(context:Context3D):void {
 		
 		}
 	}
