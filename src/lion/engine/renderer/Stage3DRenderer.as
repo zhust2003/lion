@@ -43,6 +43,7 @@ package lion.engine.renderer
 	import lion.engine.materials.DepthMaterial;
 	import lion.engine.materials.Material;
 	import lion.engine.materials.MaterialUpdateState;
+	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.Frustum;
 	import lion.engine.math.Matrix3;
 	import lion.engine.math.Matrix4;
@@ -238,7 +239,7 @@ package lion.engine.renderer
 			s.lights = lights;
 			
 			// 对物体进行排序
-//			renderList.sort(painterSortByObject);
+			renderList.sort(painterSortByObject);
 			
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
 			renderElements.length = 0;
@@ -271,7 +272,8 @@ package lion.engine.renderer
 						var uv:Array = uvs[faceIndex];
 						
 						// 插入所有顶点数据
-						for each (var v:Vector3 in allVertices) {
+						for (var key:int = 0; key < allVertices.length; key++) {
+							var v:Vector3 = allVertices[key];
 							// 坐标
 							vertexPool.push(v.x);
 							vertexPool.push(v.y);
@@ -293,8 +295,31 @@ package lion.engine.renderer
 								vertexPool.push(f.normal.y);
 								vertexPool.push(f.normal.z);
 							}
+							
+							// 如果是线框图，才需要计算顶点与对应边的距离
+							if (Mesh(o).material is WireframeMaterial) {
+								// 计算每个顶点到另外两条边的距离
+								// 计算投影后的v1, v2, v3位置
+								// 因为没有几何着色器，所以投影距离只能软计算
+								var lv1:Vector3 = projectionVector(v1, modelMatrix);
+								var lv2:Vector3 = projectionVector(v2, modelMatrix);
+								var lv3:Vector3 = projectionVector(v3, modelMatrix);
+								var vd:Vector3 = new Vector3();
+								if (key == 0) {
+									vd.x = calcDist(lv1, lv2, lv3);
+								} else if (key == 1) {
+									vd.y = calcDist(lv2, lv1, lv3);
+								} else {
+									vd.z = calcDist(lv3, lv1, lv2);
+								}
+								vertexPool.push(vd.x);
+								vertexPool.push(vd.y);
+								vertexPool.push(vd.z);
+							}
 							i++;
 						}
+						
+						
 						
 						// 索引数据
 						indexPool.push(offset);
@@ -325,7 +350,7 @@ package lion.engine.renderer
 //			if (pool.length <= 0) return;
 			
 			// 对基本渲染元素进行排序
-//			renderElements.sort(painterSort);
+			renderElements.sort(painterSort);
 			
 			
 			drawCount = 0;
@@ -351,6 +376,44 @@ package lion.engine.renderer
 			// post render
 		}
 		
+		private function projectionVector(v:Vector3, modelMatrix:Matrix4):Vector3 {
+			var lv1:Vector4 = new Vector4();
+			lv1.copy(v);
+			lv1.applyMatrix4(modelMatrix);
+			// 投影变换
+			lv1.applyMatrix4(viewProjectionMatrix);
+			// 除以齐次值
+			var invW:Number = 1 / lv1.w;
+			lv1.x *= invW;
+			lv1.y *= invW;
+			lv1.z *= invW;
+			lv1.w = 1;
+			
+			// 视口变换
+			var w:Number = stage.stageWidth;
+			var h:Number = stage.stageHeight;
+			var hw:Number = w / 2;
+			var hh:Number = h / 2;
+			var toViewPort:Matrix4 = new Matrix4(
+				hw - 0, 0,  0, hw,
+				0, -(hh - 0), 0, hh,
+				0, 0,   1, 0,
+				0, 0,   0, 1
+			);
+			lv1.applyMatrix4(toViewPort);
+			
+			return new Vector3(lv1.x, lv1.y, lv1.z);
+		}
+		
+		private function calcDist(v1:Vector3, v2:Vector3, v3:Vector3):Number
+		{
+			var v2v3:Vector3 = new Vector3().subVectors(v3, v2).normalize();
+			var v1v2:Vector3 = new Vector3().subVectors(v1, v2);
+			var det:Number = v1v2.dot(v2v3);
+			
+			return v1.dist(v2v3.multiply(det).add(v2));
+		}
+		
 		private function renderElement(e:RenderableElement, camera:Camera, vpm:Matrix4, material:Material = null):void {
 			// 初始化顶点，索引缓冲区
 			e.initVertexBuffer();
@@ -374,8 +437,10 @@ package lion.engine.renderer
 			s.renderElement = e;
 			
 			// 阴影相关
-			s.depthViewProjectionMatrix = _depthViewProjectionMatrix.toMatrix3D();
-			s.depthTexture = _depthShadowMap;
+			if (_depthViewProjectionMatrix) {
+				s.depthViewProjectionMatrix = _depthViewProjectionMatrix.toMatrix3D();
+				s.depthTexture = _depthShadowMap;
+			}
 			
 			// 设置渲染程序（顶点，片段）			
 			var m:Material = material || (e.object as Mesh).material;

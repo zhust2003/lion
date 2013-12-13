@@ -1,5 +1,10 @@
 package lion.engine.math
 {
+	/**
+	 * 碰撞盒，基本结构就是最小及最大点 
+	 * @author Dalton
+	 * 
+	 */	
 	public class Box
 	{
 		public var min:Vector3;

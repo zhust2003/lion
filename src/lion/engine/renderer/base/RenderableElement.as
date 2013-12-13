@@ -5,7 +5,9 @@ package lion.engine.renderer.base
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
 	
+	import lion.engine.core.Mesh;
 	import lion.engine.core.Object3D;
+	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.Matrix4;
 
 	/**
@@ -33,7 +35,10 @@ package lion.engine.renderer.base
 		
 		public function initVertexBuffer():void {
 			// 顶点数组
-			const dataPerVertex:int = 8;
+			var dataPerVertex:int = 8;
+			if (Mesh(object).material is WireframeMaterial) {
+				dataPerVertex = 11;
+			}
 			vertexes = context.createVertexBuffer(vertexList.length/dataPerVertex, dataPerVertex);
 			vertexes.uploadFromVector(vertexList, 0, vertexList.length/dataPerVertex);
 		}
@@ -55,6 +60,10 @@ package lion.engine.renderer.base
 		
 		public function setNormalBuffer(index:uint):void {
 			context.setVertexBufferAt(index, vertexes, 5, Context3DVertexBufferFormat.FLOAT_3); // va2 is normal
+		}
+		
+		public function setDistanceBuffer(index:uint):void {
+			context.setVertexBufferAt(index, vertexes, 8, Context3DVertexBufferFormat.FLOAT_3); // va3 is dist
 		}
 		
 		public function dispose():void {

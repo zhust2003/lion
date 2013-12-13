@@ -200,7 +200,7 @@ package lion.engine.materials
 		}
 		
 		override public function update(s:MaterialUpdateState):void {
-			if (s.renderElement.object.receiveShadow) {
+			if (s.renderElement.object.receiveShadow && s.depthTexture) {
 				shadowMapping = true;
 			}
 			

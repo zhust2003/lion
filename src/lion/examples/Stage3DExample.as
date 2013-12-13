@@ -32,10 +32,13 @@ package lion.examples
 	import lion.engine.lights.PointLight;
 	import lion.engine.materials.BaseMaterial;
 	import lion.engine.materials.Material;
+	import lion.engine.materials.TextureMaterial;
 	import lion.engine.materials.VertexLitMaterial;
 	import lion.engine.materials.WireframeMaterial;
 	import lion.engine.math.MathUtil;
 	import lion.engine.math.Matrix3;
+	import lion.engine.math.Matrix4;
+	import lion.engine.math.Sphere;
 	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
 	import lion.engine.math.Vector4;
@@ -44,6 +47,7 @@ package lion.examples
 	import lion.engine.textures.BitmapTexture;
 	import lion.engine.textures.CubeBitmapTexture;
 	import lion.engine.utils.InputManager;
+	import lion.engine.utils.Ray;
 	import lion.games.controls.EditorControl;
 	import lion.games.controls.FirstPersonControl;
 	
@@ -106,6 +110,9 @@ package lion.examples
 		private var fpsAvg:int = 0;
 		private var fps:int;
 		private var button:Sprite;
+		private var sprite3D:Sprite3D;
+		
+		private var objects:Vector.<Mesh>;
 		
 		public function Stage3DExample()
 		{
@@ -121,6 +128,8 @@ package lion.examples
 		
 		
 		public function init():void {
+			objects = new Vector.<Mesh>();
+			
 			scene = new Scene();
 			
 			// 创建一个立方体
@@ -132,6 +141,8 @@ package lion.examples
 			cube = new Mesh(p, m);
 			cube.position.set(-20, 0, 0);
 			scene.add(cube);
+			
+			objects.push(cube);
 			
 			// 创建多个
 //			for (var i:int = 0; i < 100; i++) {
@@ -155,24 +166,38 @@ package lion.examples
 			cube2.position.set(0, 20, 0);
 			scene.add(cube2);
 			
+			objects.push(cube2);
+			
+			// 创建一个立方体2
+			var p2:CubeGeometry = new CubeGeometry(10, 10, 10);
+			var m4:WireframeMaterial = new WireframeMaterial();
+			
+			var cube3:Mesh = new Mesh(p2, m4);
+			cube3.position.set(0, 0, 20);
+			scene.add(cube3);
+			
+			objects.push(cube2);
+			
 			// 创建一个公告牌
-			var m1:VertexLitMaterial = new VertexLitMaterial();
-			m1.texture = new BitmapTexture(b);
-			m1.side = Context3DTriangleFace.NONE;
-			var sprite3D:Sprite3D = new Sprite3D(m1, 10, 10);
+			var m5:TextureMaterial = new TextureMaterial();
+			m5.texture = new BitmapTexture(b);
+			m5.side = Context3DTriangleFace.NONE;
+			sprite3D = new Sprite3D(m5, 10, 10);
 			sprite3D.position.set(20, 0, 0);
 			scene.add(sprite3D);
 			
 			// 创建一个圆
-			var p3:SphereGeometry = new SphereGeometry(10, 32, 32);
+			var p3:SphereGeometry = new SphereGeometry(10, 12, 12);
 			var eb:BitmapData = (new e()).bitmapData;
 			var m2:VertexLitMaterial = new VertexLitMaterial();
-//			m2.ambient = new Vector4(0.1, 0, 0.5);
 			m2.texture = new BitmapTexture(eb);
+//			var m2:WireframeMaterial = new WireframeMaterial();
 			
 			sphere = new Mesh(p3, m2);
 			sphere.position.set(0, 0, 0);
 			scene.add(sphere);
+			
+			objects.push(sphere);
 			
 			// 创建一个地面
 			var p4:PlaneGeometry = new PlaneGeometry(400, 400, 10, 10);
@@ -201,7 +226,7 @@ package lion.examples
 			
 			// 创建一个光线
 			light = new DirectionalLight(0xFFFFFF, 1.5);
-			light.castShadow = true;
+//			light.castShadow = true;
 			light.position.set(- 40, 80, 20);
 			light.position.x = 40 * MathUtil.cosd(angle);
 			light.position.z = 40 * MathUtil.sind(angle);
@@ -261,6 +286,38 @@ package lion.examples
 			
 			setInterval(onUpdateProfile, 1000);
 			setupFullScreenButton();
+			
+			
+			stage.addEventListener(MouseEvent.CLICK, onClick);
+		}
+		
+		protected function onClick(event:MouseEvent):void
+		{
+			var x:Number = event.stageX;
+			var y:Number = event.stageY;
+			var halfWidth:Number = stage.stageWidth * 0.5;
+			var halfHeight:Number = stage.stageHeight * 0.5;
+			
+			var v:Vector3 = new Vector3((x - halfWidth) / halfWidth, (halfHeight - y) / halfHeight, camera.near);
+			var cameraProjectionMatrixInverse:Matrix4 = new Matrix4();
+			cameraProjectionMatrixInverse.getInverse(camera.projectionMatrix);
+			var vmp:Matrix4 = new Matrix4();
+			vmp.multiplyMatrices(camera.matrixWorld, cameraProjectionMatrixInverse);
+			v.applyProjection(vmp);
+			var ray:Ray = new Ray(camera.position, v.sub(camera.position).normalize());
+			
+			var sphere:Sphere = new Sphere();
+			var intersects:Vector.<Mesh> = new Vector.<Mesh>();
+			for each (var m:Mesh in objects) {
+				// 先利用包围球与包围体进行提前判断
+				// 然后在进行精确的三角形检测
+				m.geometry.computeBoundingSphere();
+				sphere.copy(m.geometry.boundingSphere);
+				sphere.applyMatrix4(m.matrixWorld);
+				if (ray.isIntersectionSphere(sphere)) {
+					trace(m.geometry, m.position);
+				}
+			}
 		}
 		
 		private function setupFullScreenButton():void
@@ -328,6 +385,8 @@ package lion.examples
 //			camera.updateProjectionMatrix();
 			cube.rotation.y += 0.01;
 			sphere.rotation.y -= 0.01;
+			// 跟随摄像机转向
+			sprite3D.rotation.copy(camera.rotation);
 			
 			// 让光照沿着y轴旋转
 			angle += 1;

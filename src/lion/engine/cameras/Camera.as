@@ -13,6 +13,8 @@ package lion.engine.cameras
 	{
 		public var projectionMatrix:Matrix4;
 		public var matrixWorldInverse:Matrix4;
+		public var near:Number
+		public var far:Number;
 		
 		public function Camera()
 		{

@@ -11,8 +11,6 @@ package lion.engine.cameras
 	{
 		private var fov:Number;
 		private var aspect:Number;
-		private var near:Number;
-		private var far:Number;
 		
 		public function PerspectiveCamera(fov:Number = 50, aspect:Number = 1, near:Number = 0.1, far:Number = 2000)
 		{
