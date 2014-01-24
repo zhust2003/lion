@@ -165,7 +165,7 @@ package lion.engine.renderer
 					var r:RenderObject = new RenderObject();
 					r.id = o.id;
 					r.object = o;
-					r.z = Mesh(o).position.z;
+					r.z = o.position.z;
 					renderList.push(r);
 				}
 			}
@@ -244,6 +244,7 @@ package lion.engine.renderer
 			// 遍历所有需要渲染的对象，转化为基本渲染元素
 			renderElements.length = 0;
 			
+			var centroid:Vector3 = new Vector3();
 			for each (var r:RenderObject in renderList) {
 				var o:Object3D = r.object;
 				var modelMatrix:Matrix4 = o.matrixWorld;
@@ -332,17 +333,16 @@ package lion.engine.renderer
 					
 					// 基本的渲染面
 					// 一整个物体，一个渲染元素
-					var centroid:Vector3 = new Vector3();
 					var re:RenderableElement = new RenderableElement();
 					re.model = modelMatrix;
 					re.triangleCount = indexPool.length / 3;
 					re.indexList = indexPool;
 					re.vertexList = vertexPool;
-					centroid.copy(Mesh(o).position).applyProjection(viewProjectionMatrix);
+					centroid.copy(o.position).applyProjection(viewProjectionMatrix);
 					re.z = centroid.z;
-					
 					re.object = r.object;
 					re.context = context;
+					
 					renderElements.push(re);
 				}
 			}
