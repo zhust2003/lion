@@ -68,11 +68,11 @@ package lion.engine.geometries
 					// 两个三角面
 					var face:Surface = new Surface(a, b, d, normal);
 					faces.push(face);
-					faceVertexUvs.push([uva, uvb, uvd]);
+					faceVertexUvs.push(new <Vector2>[uva, uvb, uvd]);
 					
 					face = new Surface(b, c, d, normal);
 					faces.push(face);
-					faceVertexUvs.push([uvb, uvc, uvd]);
+					faceVertexUvs.push(new <Vector2>[uvb, uvc, uvd]);
 				}
 			}
 			

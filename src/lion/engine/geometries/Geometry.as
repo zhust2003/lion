@@ -18,7 +18,7 @@ package lion.engine.geometries
 		// 面
 		public var faces:Vector.<Surface>;
 		// UV坐标
-		public var faceVertexUvs:Array;
+		public var faceVertexUvs:Vector.<Vector.<Vector2>>;
 		
 		// 包围球
 		public var boundingSphere:Sphere;
@@ -31,7 +31,7 @@ package lion.engine.geometries
 			name = '';
 			vertices = new Vector.<Vector3>();
 			faces = new Vector.<Surface>();
-			faceVertexUvs = [];
+			faceVertexUvs = new Vector.<Vector.<Vector2>>();
 		}
 		
 		/**

@@ -254,7 +254,7 @@ package lion.engine.renderer
 					var vertices:Vector.<Vector3> = geometry.vertices;
 					var faces:Vector.<Surface> = geometry.faces;
 					var normals:Vector.<Vector3> = geometry.normals;
-					var uvs:Array = geometry.faceVertexUvs;
+					var uvs:Vector.<Vector.<Vector2>> = geometry.faceVertexUvs;
 					
 					// 将三角形面片转成可渲染的面片数据
 					var vertexPool:Vector.<Number> = new Vector.<Number>();
@@ -270,7 +270,7 @@ package lion.engine.renderer
 						var vertexNormals:Array = f.vertexNormals;
 						var i:int = 0;
 						
-						var uv:Array = uvs[faceIndex];
+						var uv:Vector.<Vector2> = uvs[faceIndex];
 						
 						// 插入所有顶点数据
 						for (var key:int = 0; key < allVertices.length; key++) {

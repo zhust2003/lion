@@ -1,19 +1,31 @@
 package lion.engine.loaders
 {
+	import flash.display.Bitmap;
+	import flash.display.BitmapData;
+	import flash.display.Loader;
+	import flash.display.TriangleCulling;
+	import flash.display3D.Context3DTriangleFace;
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	
+	import lion.engine.core.Mesh;
 	import lion.engine.core.Object3D;
 	import lion.engine.loaders.parser.MD2Parser;
 	import lion.engine.loaders.parser.Parser;
+	import lion.engine.loaders.parser.ParserEvent;
+	import lion.engine.materials.VertexLitMaterial;
+	import lion.engine.materials.WireframeMaterial;
+	import lion.engine.textures.BitmapTexture;
 	
 	public class Loader3D extends Object3D
 	{
 		private var loader:URLLoader;
 		private var parser:Parser;
+		private var skinLoader:Loader;
+		private var mesh:Mesh;
 		
 		public function Loader3D()
 		{
@@ -33,9 +45,49 @@ package lion.engine.loaders
 					trace('not default parser');
 			}
 			
+			parser.addEventListener(ParserEvent.COMPLETE, onParseComplete);
+			
 			loader.addEventListener(Event.COMPLETE, onComplete);
 			loader.addEventListener(IOErrorEvent.IO_ERROR, onError);
 			loader.load(r);
+		}
+		
+		public function setSkin(r:URLRequest):void {
+			skinLoader = new Loader();
+			skinLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoadSkinComplete);
+			skinLoader.load(r);
+		}
+		
+		protected function onLoadSkinComplete(event:Event):void
+		{
+			skinLoader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onLoadSkinComplete);
+			var b:BitmapData = Bitmap(skinLoader.content).bitmapData;
+			var m:VertexLitMaterial = new VertexLitMaterial();
+			m.texture = new BitmapTexture(b);
+//			m.side = Context3DTriangleFace.BACK;
+			mesh.material = m;
+			
+		}
+		
+		protected function onParseComplete(event:Event):void
+		{
+			parser.removeEventListener(ParserEvent.COMPLETE, onParseComplete);
+			
+			switch(parser.type)
+			{
+				case 'md2':
+				{
+					var md2:MD2Parser = parser as MD2Parser;
+					mesh = new Mesh(md2.geometry, md2.material);
+					add(mesh);
+					break;
+				}
+					
+				default:
+				{
+					break;
+				}
+			}
 		}
 		
 		private function getFileName(url:String):String {

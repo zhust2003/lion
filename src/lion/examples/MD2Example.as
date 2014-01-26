@@ -100,13 +100,17 @@ package lion.examples
 			
 			plane = new Mesh(p4, m3);
 			plane.receiveShadow = true;
-			plane.position.set(0, -20, 0);
+//			plane.position.set(0, -20, 0);
 			plane.rotation.x = -1.57;
 			scene.add(plane);
 			
 			// 增加一个md2模型
 			var hellpig:Loader3D = new Loader3D();
+			hellpig.scale.multiply(10);
+			// TODO 顺序问题
 			hellpig.load(new URLRequest('../assets/md2/hellpig.md2'));
+			hellpig.setSkin(new URLRequest('../assets/md2/hellpig.png'));
+		    scene.add(hellpig);
 			
 			// 创建一个摄像机
 			camera = new PerspectiveCamera(75, 1);
@@ -118,9 +122,8 @@ package lion.examples
 			// 创建一个光线
 			light = new DirectionalLight(0xFFFFFF, 1.5);
 			light.position.set(- 40, 80, 20);
-			light.position.x = 40 * MathUtil.cosd(angle);
-			light.position.z = 40 * MathUtil.sind(angle);
 			light.lookAt(new Vector3(0, 0, 0));
+			light.castShadow = true;
 			scene.add(light);
 			
 			// 创建一个渲染器

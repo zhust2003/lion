@@ -1,5 +1,6 @@
 package lion.engine.core
 {
+	import lion.engine.animators.Animator;
 	import lion.engine.geometries.Geometry;
 	import lion.engine.materials.Material;
 
@@ -12,12 +13,21 @@ package lion.engine.core
 	{
 		public var geometry:Geometry;
 		public var material:Material;
+		public var animator:Animator;
 		
 		public function Mesh(g:Geometry, m:Material)
 		{
 			super();
 			this.geometry = g;
 			this.material = m;
+		}
+		
+		override public function updateMatrixWorld():void {
+			super.updateMatrixWorld();
+			
+			if (animator) {
+				animator.update();
+			}
 		}
 	}
 }

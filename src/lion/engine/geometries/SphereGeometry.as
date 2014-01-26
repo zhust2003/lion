@@ -90,7 +90,7 @@ package lion.engine.geometries
 						f.vertexNormals = [n1, n3, n4];
 						f.normal = new Vector3().add(n1).add(n3).add(n4).divide(3);
 						this.faces.push(f);
-						this.faceVertexUvs.push([uv1, uv3, uv4]);
+						this.faceVertexUvs.push(new <Vector2>[uv1, uv3, uv4]);
 						
 					} else if (Math.abs(this.vertices[v3].y) === this.radius) {
 						
@@ -98,7 +98,7 @@ package lion.engine.geometries
 						f.vertexNormals = [n1, n2, n3];
 						f.normal = new Vector3().add(n1).add(n2).add(n3).divide(3);
 						this.faces.push(f);
-						this.faceVertexUvs.push([uv1, uv2, uv3]);
+						this.faceVertexUvs.push(new <Vector2>[uv1, uv2, uv3]);
 						
 					} else {
 						
@@ -107,13 +107,13 @@ package lion.engine.geometries
 						f.vertexNormals = [n1, n2, n4];
 						f.normal = new Vector3().add(n1).add(n2).add(n3).divide(3);
 						this.faces.push(f);
-						this.faceVertexUvs.push([uv1, uv2, uv4]);
+						this.faceVertexUvs.push(new <Vector2>[uv1, uv2, uv4]);
 						
 						f = new Surface(v2, v3, v4);
 						f.vertexNormals = [n2, n3, n4];
 						f.normal = new Vector3().add(n2).add(n3).add(n4).divide(3);
 						this.faces.push(f);
-						this.faceVertexUvs.push([uv2, uv3, uv4]);
+						this.faceVertexUvs.push(new <Vector2>[uv2, uv3, uv4]);
 						
 					}
 				}

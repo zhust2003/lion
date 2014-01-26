@@ -1,7 +1,20 @@
 package lion.engine.loaders.parser
 {
+	import flash.display.Loader;
+	import flash.events.Event;
+	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
+	import flash.utils.Dictionary;
 	import flash.utils.Endian;
+	
+	import lion.engine.animators.VertexAnimation;
+	import lion.engine.animators.VertexAnimatorSet;
+	import lion.engine.core.Surface;
+	import lion.engine.geometries.Geometry;
+	import lion.engine.materials.Material;
+	import lion.engine.materials.WireframeMaterial;
+	import lion.engine.math.Vector2;
+	import lion.engine.math.Vector3;
 
 	/**
 	 * Quake2 顶点动画 
@@ -27,26 +40,50 @@ package lion.engine.loaders.parser
 		/**
 		 * 所有纹理UV坐标 
 		 */		
-		private var texCoords:Vector.<MD2TexCoords>;
+		private var texCoords:Vector.<Vector2>;
 		/**
 		 * 纹理名
 		 */		
 		private var skins:Vector.<String>;
+		
+		/**
+		 * 通过MD2创建的几何体 
+		 */		
+		public var geometry:Geometry;
+		public var material:Material;
+		private var skinLoader:Loader;
+		private var animatorSet:VertexAnimatorSet;
+		private var animations:Dictionary;
+		private var prevClip:VertexAnimation;
 		
 		public function MD2Parser()
 		{
 			super();
 		}
 		
+		override public function get type():String {
+			return 'md2';
+		}
+		
 		override public function parse(data:*):void {
 			bytes = data as ByteArray;
 			bytes.endian = Endian.LITTLE_ENDIAN;
 			
-			parseHeader();
+			if (! parseHeader()) {
+				return;
+			}
+			geometry = new Geometry();
 			parseFrames();
-			parseTriangles();
 			parseUV();
+			parseTriangles();
 			parseSkin();
+			
+			if (skins.length <= 0) {
+				material = new WireframeMaterial();
+			} else {
+			}
+			
+			dispatchEvent(new ParserEvent(ParserEvent.COMPLETE));
 		}
 		
 		private function parseSkin():void
@@ -64,12 +101,12 @@ package lion.engine.loaders.parser
 		{
 			bytes.position = header.offsetTexCoords;
 			
-			texCoords = new Vector.<MD2TexCoords>(header.numTexCoords);
+			texCoords = new Vector.<Vector2>(header.numTexCoords);
 			
 			for (var i:int = 0; i < header.numTexCoords; ++i) {
-				var t:MD2TexCoords = new MD2TexCoords();
-				t.u = bytes.readUnsignedShort() / header.skinWidthPx;
-				t.v = bytes.readUnsignedShort() / header.skinHeightPx;
+				var t:Vector2 = new Vector2();
+				t.x = bytes.readUnsignedShort() / header.skinWidthPx;
+				t.y = bytes.readUnsignedShort() / header.skinHeightPx;
 				
 				texCoords[i] = t;
 			}
@@ -81,19 +118,34 @@ package lion.engine.loaders.parser
 			
 			triangles = new Vector.<MD2Triangle>(header.numTriangles);
 			
+			// 为了计算法线
+			var ab:Vector3 = new Vector3();
+			var bc:Vector3 = new Vector3();
+			var normal:Vector3 = new Vector3();
+			
 			for (var i:int = 0; i < header.numTriangles; ++i) {
 				var t:MD2Triangle = new MD2Triangle();
-				t.textureIndices = new Vector.<uint>(3);
-				t.textureIndices[0] = bytes.readUnsignedShort();
-				t.textureIndices[1] = bytes.readUnsignedShort();
-				t.textureIndices[2] = bytes.readUnsignedShort();
 				
 				t.vertexIndices = new Vector.<uint>(3);
 				t.vertexIndices[0] = bytes.readUnsignedShort();
 				t.vertexIndices[1] = bytes.readUnsignedShort();
 				t.vertexIndices[2] = bytes.readUnsignedShort();
 				
+				t.textureIndices = new Vector.<uint>(3);
+				t.textureIndices[0] = bytes.readUnsignedShort();
+				t.textureIndices[1] = bytes.readUnsignedShort();
+				t.textureIndices[2] = bytes.readUnsignedShort();
+				
 				triangles[i] = t;
+				
+				// 逆时针建模
+				var face:Surface = new Surface(t.vertexIndices[0], t.vertexIndices[1], t.vertexIndices[2]);
+				face.normal = normal.crossVectors(bc.subVectors(geometry.vertices[face.c], geometry.vertices[face.b]),
+												  ab.subVectors(geometry.vertices[face.b], geometry.vertices[face.a]));
+				geometry.faces.push(face);
+				geometry.faceVertexUvs.push(new <Vector2>[texCoords[t.textureIndices[0]], 
+														  texCoords[t.textureIndices[1]], 
+														  texCoords[t.textureIndices[2]]]); 
 			}
 		}
 		
@@ -101,6 +153,8 @@ package lion.engine.loaders.parser
 		{
 			bytes.position = header.offsetFrames;
 			
+			animatorSet = new VertexAnimatorSet();
+			animations = new Dictionary(true);
 			frames = new Vector.<MD2Frame>(header.numFrames);
 			
 			for (var i:int = 0; i < header.numFrames; ++i) {
@@ -118,6 +172,9 @@ package lion.engine.loaders.parser
 				f.name = readFrameName();
 
 				f.vertices = new Vector.<MD2Vertex>(header.numVertices);
+				
+				var g:Geometry = new Geometry();
+				
 				for (var j:int = 0; j < header.numVertices; ++j) {
 					var v:MD2Vertex = new MD2Vertex();
 					v.x = bytes.readUnsignedByte() * f.scale[0] + f.trans[0];
@@ -126,9 +183,37 @@ package lion.engine.loaders.parser
 					// 保留位
 					bytes.readUnsignedByte();
 					f.vertices[j] = v;
+					
+					g.vertices.push(new Vector3(v.x, v.z, v.y));
+					if (i == 0) {
+						geometry.vertices.push(new Vector3(v.x, v.z, v.y));
+					}
 				}
 				
+				var clip:VertexAnimation = animations[f.name];
+				
+				// 如果是新的动画
+				if (! clip) {
+					if (prevClip) {
+						animatorSet.addAnimation(prevClip);
+					}
+					
+					clip = new VertexAnimation();
+					clip.name = f.name;
+					
+					animations[f.name] = clip;
+					
+					prevClip = clip;
+				}
+				clip.addFrame(g, 1000 / 6);
+				
+				
 				frames[i] = f;
+			}
+			
+			// 增加最后一个动画
+			if (prevClip) {
+				animatorSet.addAnimation(prevClip);
 			}
 		}
 		
