@@ -36,9 +36,12 @@ package lion.engine.renderer.base
 		public function initVertexBuffer():void {
 			// 顶点数组
 			var dataPerVertex:int = 8;
+			
+			// 如果是线框，增加3个数据，到每个边的距离
 			if (Mesh(object).material is WireframeMaterial) {
 				dataPerVertex = 11;
 			}
+			
 			vertexes = context.createVertexBuffer(vertexList.length/dataPerVertex, dataPerVertex);
 			vertexes.uploadFromVector(vertexList, 0, vertexList.length/dataPerVertex);
 		}

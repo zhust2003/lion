@@ -9,16 +9,30 @@ package lion.engine.animators
 	 */	
 	public class VertexAnimation
 	{
-		// 动画名
+		/**
+		 * 动画名称 
+		 */		
 		public var name:String;
-		// 每帧的多边形数据
-		protected var frames:Vector.<Geometry> = new Vector.<Geometry>();
-		// 每帧的持续时间		
-		protected var durations:Vector.<uint> = new Vector.<uint>();
+		
+
+		/**
+		 * 每帧的多边形数据 
+		 */		
+		public var frames:Vector.<Geometry> = new Vector.<Geometry>();
+		
+		/**
+		 * 每帧持续时间 
+		 */				
+		public var durations:Vector.<uint> = new Vector.<uint>();
+		
+		/**
+		 * 是否循环 
+		 */		
+		public var looping:Boolean = false;
 		/**
 		 * 总时间 
 		 */				
-		protected var totalDuration:uint = 0;
+		public var totalDuration:uint = 0;
 		
 		public function VertexAnimation()
 		{

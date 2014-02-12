@@ -11,9 +11,12 @@ package lion.engine.loaders
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	
+	import lion.engine.animators.Animator;
+	import lion.engine.animators.VertexAnimator;
 	import lion.engine.core.Mesh;
 	import lion.engine.core.Object3D;
 	import lion.engine.loaders.parser.MD2Parser;
+	import lion.engine.loaders.parser.OBJParser;
 	import lion.engine.loaders.parser.Parser;
 	import lion.engine.loaders.parser.ParserEvent;
 	import lion.engine.materials.VertexLitMaterial;
@@ -41,6 +44,10 @@ package lion.engine.loaders
 					parser = new MD2Parser();
 					loader.dataFormat = URLLoaderDataFormat.BINARY;
 					break;
+				case '.obj':
+					parser = new OBJParser();
+					loader.dataFormat = URLLoaderDataFormat.TEXT;
+					break;
 				default:
 					trace('not default parser');
 			}
@@ -66,7 +73,6 @@ package lion.engine.loaders
 			m.texture = new BitmapTexture(b);
 //			m.side = Context3DTriangleFace.BACK;
 			mesh.material = m;
-			
 		}
 		
 		protected function onParseComplete(event:Event):void
@@ -78,11 +84,18 @@ package lion.engine.loaders
 				case 'md2':
 				{
 					var md2:MD2Parser = parser as MD2Parser;
-					mesh = new Mesh(md2.geometry, md2.material);
+					mesh = new VertexAnimator(md2.geometry, md2.material, md2.animatorSet);
+					VertexAnimator(mesh).play('frame');
 					add(mesh);
 					break;
 				}
-					
+				case 'obj':
+				{
+					var obj:OBJParser = parser as OBJParser;
+					mesh = new Mesh(obj.geometry, new VertexLitMaterial());
+					add(mesh);
+					break;
+				}
 				default:
 				{
 					break;

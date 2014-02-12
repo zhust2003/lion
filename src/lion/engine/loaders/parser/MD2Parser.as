@@ -52,7 +52,8 @@ package lion.engine.loaders.parser
 		public var geometry:Geometry;
 		public var material:Material;
 		private var skinLoader:Loader;
-		private var animatorSet:VertexAnimatorSet;
+		
+		public var animatorSet:VertexAnimatorSet;
 		private var animations:Dictionary;
 		private var prevClip:VertexAnimation;
 		
@@ -123,6 +124,9 @@ package lion.engine.loaders.parser
 			var bc:Vector3 = new Vector3();
 			var normal:Vector3 = new Vector3();
 			
+			var faces:Vector.<Surface> = new Vector.<Surface>();
+			var faceVertexUvs:Vector.<Vector.<Vector2>> = new Vector.<Vector.<Vector2>>();
+			
 			for (var i:int = 0; i < header.numTriangles; ++i) {
 				var t:MD2Triangle = new MD2Triangle();
 				
@@ -142,10 +146,23 @@ package lion.engine.loaders.parser
 				var face:Surface = new Surface(t.vertexIndices[0], t.vertexIndices[1], t.vertexIndices[2]);
 				face.normal = normal.crossVectors(bc.subVectors(geometry.vertices[face.c], geometry.vertices[face.b]),
 												  ab.subVectors(geometry.vertices[face.b], geometry.vertices[face.a]));
-				geometry.faces.push(face);
-				geometry.faceVertexUvs.push(new <Vector2>[texCoords[t.textureIndices[0]], 
+				
+				// 临时
+				faces.push(face);
+				faceVertexUvs.push(new <Vector2>[texCoords[t.textureIndices[0]], 
 														  texCoords[t.textureIndices[1]], 
 														  texCoords[t.textureIndices[2]]]); 
+			}
+			
+			geometry.faces = faces;
+			geometry.faceVertexUvs = faceVertexUvs;
+			
+			// 所有动画帧的多边形的面都需要设置
+			for each (var animation:VertexAnimation in animatorSet.animations) {
+				for each (var g:Geometry in animation.frames) {
+					g.faces = faces;
+					g.faceVertexUvs = faceVertexUvs;
+				}
 			}
 		}
 		
@@ -185,6 +202,8 @@ package lion.engine.loaders.parser
 					f.vertices[j] = v;
 					
 					g.vertices.push(new Vector3(v.x, v.z, v.y));
+					
+					// 临时测试
 					if (i == 0) {
 						geometry.vertices.push(new Vector3(v.x, v.z, v.y));
 					}

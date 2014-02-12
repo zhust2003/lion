@@ -226,7 +226,7 @@ package lion.examples
 			
 			// 创建一个光线
 			light = new DirectionalLight(0xFFFFFF, 1.5);
-//			light.castShadow = true;
+			light.castShadow = true;
 			light.position.set(- 40, 80, 20);
 			light.position.x = 40 * MathUtil.cosd(angle);
 			light.position.z = 40 * MathUtil.sind(angle);

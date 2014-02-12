@@ -9,7 +9,7 @@ package lion.engine.animators
 	 */	
 	public class VertexAnimatorSet
 	{
-		private var animations:Dictionary = new Dictionary();
+		public var animations:Dictionary = new Dictionary();
 		
 		public function VertexAnimatorSet()
 		{

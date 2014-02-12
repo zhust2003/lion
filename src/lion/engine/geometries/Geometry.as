@@ -5,6 +5,7 @@ package lion.engine.geometries
 	import lion.engine.math.Sphere;
 	import lion.engine.math.Vector2;
 	import lion.engine.math.Vector3;
+	import lion.engine.renderer.base.RenderableElement;
 
 	public class Geometry
 	{
@@ -14,7 +15,7 @@ package lion.engine.geometries
 		// 顶点
 		public var vertices:Vector.<Vector3>;
 		// 每个顶点的法线
-		public var normals:Vector.<Vector3>;
+//		public var normals:Vector.<Vector3>;
 		// 面
 		public var faces:Vector.<Surface>;
 		// UV坐标
@@ -24,6 +25,9 @@ package lion.engine.geometries
 		public var boundingSphere:Sphere;
 		// 包围盒
 		public var boundingBox:Box;
+		
+		// stage3d的可渲染元素
+		public var renderableElement:RenderableElement;
 		
 		public function Geometry()
 		{

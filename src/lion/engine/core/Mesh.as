@@ -13,21 +13,12 @@ package lion.engine.core
 	{
 		public var geometry:Geometry;
 		public var material:Material;
-		public var animator:Animator;
 		
 		public function Mesh(g:Geometry, m:Material)
 		{
 			super();
 			this.geometry = g;
 			this.material = m;
-		}
-		
-		override public function updateMatrixWorld():void {
-			super.updateMatrixWorld();
-			
-			if (animator) {
-				animator.update();
-			}
 		}
 	}
 }

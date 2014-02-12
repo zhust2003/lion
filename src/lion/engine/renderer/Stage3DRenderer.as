@@ -251,103 +251,110 @@ package lion.engine.renderer
 				
 				if (o is Mesh) {
 					var geometry:Geometry = Mesh(o).geometry;
-					var vertices:Vector.<Vector3> = geometry.vertices;
-					var faces:Vector.<Surface> = geometry.faces;
-					var normals:Vector.<Vector3> = geometry.normals;
-					var uvs:Vector.<Vector.<Vector2>> = geometry.faceVertexUvs;
 					
-					// 将三角形面片转成可渲染的面片数据
-					var vertexPool:Vector.<Number> = new Vector.<Number>();
-					var indexPool:Vector.<uint> = new Vector.<uint>();
-					var faceIndex:int = 0;
-					var offset:int = 0;
-					for each (var f:Surface in faces) {
-						// 顶点数据
-						var v1:Vector3 = vertices[f.a];
-						var v2:Vector3 = vertices[f.b];
-						var v3:Vector3 = vertices[f.c];
-						var allVertices:Array = [v1, v2, v3];
-						var vertexNormals:Array = f.vertexNormals;
-						var i:int = 0;
+					var re:RenderableElement = geometry.renderableElement;
+					
+					if (! re) {
+						var vertices:Vector.<Vector3> = geometry.vertices;
+						var faces:Vector.<Surface> = geometry.faces;
+//						var normals:Vector.<Vector3> = geometry.normals;
+						var uvs:Vector.<Vector.<Vector2>> = geometry.faceVertexUvs;
 						
-						var uv:Vector.<Vector2> = uvs[faceIndex];
-						
-						// 插入所有顶点数据
-						for (var key:int = 0; key < allVertices.length; key++) {
-							var v:Vector3 = allVertices[key];
-							// 坐标
-							vertexPool.push(v.x);
-							vertexPool.push(v.y);
-							vertexPool.push(v.z);
+						// 将三角形面片转成可渲染的面片数据
+						var vertexPool:Vector.<Number> = new Vector.<Number>();
+						var indexPool:Vector.<uint> = new Vector.<uint>();
+						var faceIndex:int = 0;
+						var offset:int = 0;
+						for each (var f:Surface in faces) {
+							// 顶点数据
+							var v1:Vector3 = vertices[f.a];
+							var v2:Vector3 = vertices[f.b];
+							var v3:Vector3 = vertices[f.c];
+							var allVertices:Array = [v1, v2, v3];
+							var vertexNormals:Array = f.vertexNormals;
+							var i:int = 0;
 							
-							// u,v
-							vertexPool.push(uv[i].x);
-							vertexPool.push(uv[i].y);
+							var uv:Vector.<Vector2> = uvs[faceIndex];
 							
-							// 法线
-							// 如果有顶点法线
-							if (vertexNormals.length == 3) {
-								var vn:Vector3 = vertexNormals[i];
-								vertexPool.push(vn.x);
-								vertexPool.push(vn.y);
-								vertexPool.push(vn.z);
-							} else {
-								vertexPool.push(f.normal.x);
-								vertexPool.push(f.normal.y);
-								vertexPool.push(f.normal.z);
-							}
-							
-							// 如果是线框图，才需要计算顶点与对应边的距离
-							if (Mesh(o).material is WireframeMaterial) {
-								// 计算每个顶点到另外两条边的距离
-								// 计算投影后的v1, v2, v3位置
-								// 因为没有几何着色器，所以投影距离只能软计算
-								var lv1:Vector3 = projectionVector(v1, modelMatrix);
-								var lv2:Vector3 = projectionVector(v2, modelMatrix);
-								var lv3:Vector3 = projectionVector(v3, modelMatrix);
-								var vd:Vector3 = new Vector3();
-								if (key == 0) {
-									vd.x = calcDist(lv1, lv2, lv3);
-								} else if (key == 1) {
-									vd.y = calcDist(lv2, lv1, lv3);
+							// 插入所有顶点数据
+							for (var key:int = 0; key < allVertices.length; key++) {
+								var v:Vector3 = allVertices[key];
+								// 坐标
+								vertexPool.push(v.x);
+								vertexPool.push(v.y);
+								vertexPool.push(v.z);
+								
+								// u,v
+								vertexPool.push(uv[i].x);
+								vertexPool.push(uv[i].y);
+								
+								// 法线
+								// 如果有顶点法线
+								if (vertexNormals.length == 3) {
+									var vn:Vector3 = vertexNormals[i];
+									vertexPool.push(vn.x);
+									vertexPool.push(vn.y);
+									vertexPool.push(vn.z);
 								} else {
-									vd.z = calcDist(lv3, lv1, lv2);
+									vertexPool.push(f.normal.x);
+									vertexPool.push(f.normal.y);
+									vertexPool.push(f.normal.z);
 								}
-								vertexPool.push(vd.x);
-								vertexPool.push(vd.y);
-								vertexPool.push(vd.z);
+								
+								// 如果是线框图，才需要计算顶点与对应边的距离
+								if (Mesh(o).material is WireframeMaterial) {
+									// 计算每个顶点到另外两条边的距离
+									// 计算投影后的v1, v2, v3位置
+									// 因为没有几何着色器，所以投影距离只能软计算
+									var lv1:Vector3 = projectionVector(v1, modelMatrix);
+									var lv2:Vector3 = projectionVector(v2, modelMatrix);
+									var lv3:Vector3 = projectionVector(v3, modelMatrix);
+									var vd:Vector3 = new Vector3();
+									if (key == 0) {
+										vd.x = calcDist(lv1, lv2, lv3);
+									} else if (key == 1) {
+										vd.y = calcDist(lv2, lv1, lv3);
+									} else {
+										vd.z = calcDist(lv3, lv1, lv2);
+									}
+									vertexPool.push(vd.x);
+									vertexPool.push(vd.y);
+									vertexPool.push(vd.z);
+								}
+								i++;
 							}
-							i++;
+							
+							
+							
+							// 索引数据
+							indexPool.push(offset);
+							indexPool.push(offset + 1);
+							indexPool.push(offset + 2);
+							offset += 3;
+							faceIndex ++;
 						}
 						
 						
+						// 基本的渲染面
+						// 一整个物体，一个渲染元素
+						re = new RenderableElement();
+						re.model = modelMatrix;
+						re.triangleCount = indexPool.length / 3;
+						re.indexList = indexPool;
+						re.vertexList = vertexPool;
+						centroid.copy(o.position).applyProjection(viewProjectionMatrix);
+						re.z = centroid.z;
+						re.object = r.object;
+						re.context = context;
 						
-						// 索引数据
-						indexPool.push(offset);
-						indexPool.push(offset + 1);
-						indexPool.push(offset + 2);
-						offset += 3;
-						faceIndex ++;
+						geometry.renderableElement = re;
 					}
-					
-					
-					// 基本的渲染面
-					// 一整个物体，一个渲染元素
-					var re:RenderableElement = new RenderableElement();
-					re.model = modelMatrix;
-					re.triangleCount = indexPool.length / 3;
-					re.indexList = indexPool;
-					re.vertexList = vertexPool;
-					centroid.copy(o.position).applyProjection(viewProjectionMatrix);
-					re.z = centroid.z;
-					re.object = r.object;
-					re.context = context;
 					
 					renderElements.push(re);
 				}
 			}
 			
-//			if (pool.length <= 0) return;
+			if (renderElements.length <= 0) return;
 			
 			// 对基本渲染元素进行排序
 			renderElements.sort(painterSort);
@@ -445,6 +452,7 @@ package lion.engine.renderer
 			// 设置渲染程序（顶点，片段）			
 			var m:Material = material || (e.object as Mesh).material;
 			
+			// 激活材质
 			m.activate(s.context);
 			
 			// 更新材质信息
@@ -456,8 +464,10 @@ package lion.engine.renderer
 				currentSide = m.side;
 			}
 			
+			// 渲染
 			e.render();
 			
+			// 析构材质
 			m.deactivate(s.context);
 			
 			drawCount++;

@@ -13,11 +13,9 @@ package lion.examples
 	import flash.utils.getTimer;
 	import flash.utils.setInterval;
 	
-	import lion.engine.cameras.Camera;
 	import lion.engine.cameras.PerspectiveCamera;
 	import lion.engine.core.Mesh;
 	import lion.engine.core.Scene;
-	import lion.engine.core.Sprite3D;
 	import lion.engine.geometries.PlaneGeometry;
 	import lion.engine.lights.DirectionalLight;
 	import lion.engine.loaders.Loader3D;
@@ -27,47 +25,42 @@ package lion.examples
 	import lion.engine.math.Vector4;
 	import lion.engine.renderer.Stage3DRenderer;
 	import lion.engine.textures.BitmapTexture;
-	import lion.engine.utils.InputManager;
 	import lion.games.controls.EditorControl;
 	
-	/**
-	 * 读取Quake2模型的例子 
-	 */	
 	[SWF(frameRate="60", width="600", height="600", backgroundColor="#0")]
-	public class MD2Example extends Sprite
+	public class OBJExample extends Sprite
 	{
-		private var renderer:Stage3DRenderer;
-		private var scene:Scene;
-		private var plane:Mesh;
-		private var camera:Camera;
-		private var viewport:Rectangle;
-		private var info:TextField;
-		private var center:Vector3;
-		private var control:EditorControl;
-		
-		
 		// 经典的西洋棋盘
 		[Embed(source="../../../assets/checkerboard.jpg", mimeType="image/jpeg")]
 		private var CheckerBoard:Class;
 		
 		
+		private var plane:Mesh;
+		private var scene:Scene;
+		private var camera:PerspectiveCamera;
 		private var light:DirectionalLight;
-		private var lastTime:int = 0;
-		private var fpsSum:int = 0;
-		private var fpsCount:int = 0;
-		private var fpsAvg:int = 0;
+		private var renderer:Stage3DRenderer;
+		private var info:TextField;
+		private var viewport:Rectangle;
+		private var control:EditorControl;
+		private var lastTime:int;
 		private var fps:int;
+		private var fpsSum:int;
+		private var fpsCount:int;
+		private var fpsAvg:Number;
+		private var center:Vector3;
 		
 		
-		public function MD2Example()
+		public function OBJExample()
 		{
+			super();
 			addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
 		}
 		
 		protected function onAddToStage(event:Event):void
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, onAddToStage);
-
+			
 			init();
 		}
 		
@@ -93,12 +86,10 @@ package lion.examples
 			scene.add(plane);
 			
 			// 增加一个md2模型
-			var hellpig:Loader3D = new Loader3D();
-			hellpig.scale.multiply(10);
-			// TODO 顺序问题
-			hellpig.load(new URLRequest('../assets/md2/hellpig.md2'));
-			hellpig.setSkin(new URLRequest('../assets/md2/hellpig.png'));
-		    scene.add(hellpig);
+			var model:Loader3D = new Loader3D();
+			model.scale.multiply(10);
+			model.load(new URLRequest('../assets/obj/lantern_genie.obj'));
+			scene.add(model);
 			
 			// 创建一个摄像机
 			camera = new PerspectiveCamera(75, 1);
@@ -129,9 +120,8 @@ package lion.examples
 			
 			// 摄像机控制器
 			control = new EditorControl(camera, stage, new Vector3());
-
+			
 			viewport = new Rectangle(0, 0, stage.stageWidth, stage.stageHeight);
-			InputManager.instance.init(stage);
 			
 			addEventListener(Event.ENTER_FRAME, update);
 			
@@ -166,6 +156,5 @@ package lion.examples
 			
 			lastTime = nowTime;
 		}
-		
 	}
 }
